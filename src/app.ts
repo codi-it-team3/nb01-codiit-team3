@@ -15,7 +15,8 @@ app.use(STATIC_PATH, express.static(path.resolve(process.cwd(), PUBLIC_PATH)));
 app.use(defaultNotFoundHandler);
 app.use(globalErrorHandler);
 
-
 app.listen(PORT, () => {
   console.log(`Server started on port ${PORT}`);
 });
+
+export default app;
