@@ -21,7 +21,7 @@ export async function createProduct(data: {
     throw new Error('해당 유저의 스토어가 존재하지 않습니다.');
   }
 
-  return await prismaClient.product.create({
+  const createdProduct = await prismaClient.product.create({
     data: {
       name: data.name,
       image: data.images[0] ?? '',
@@ -32,16 +32,19 @@ export async function createProduct(data: {
       categoryId: data.categoryId,
       storeId: store.id,
       stocks: {
-        create: data.stocks.map((s) => ({
-          size: { connect: { id: s.sizeId } },
-          quantity: s.quantity,
+        create: data.stocks.map((stock) => ({
+          sizeId: String(stock.sizeId),
+          quantity: stock.quantity,
         })),
       },
     },
     include: {
-      stocks: true,
+      stocks: { include: { size: true } },
+      category: true,
     },
   });
+
+  return createdProduct;
 }
 
 export async function findProductById(productId: string) {

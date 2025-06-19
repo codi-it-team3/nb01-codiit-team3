@@ -6,7 +6,7 @@ import { clearDatabase } from '../lib/testUtils';
 describe('Product API 통합 테스트 (CRUD)', () => {
   let storeId: string;
   let categoryId: string;
-  let sizeId: number;
+  let sizeId: string;
   let productId: string;
 
   beforeAll(async () => {
@@ -15,7 +15,7 @@ describe('Product API 통합 테스트 (CRUD)', () => {
     await prismaClient.grade.create({
       data: {
         id: 'grade_green',
-        name: '그린',
+        name: 'Green',
         rate: 0,
         minAmount: 0,
       },
@@ -43,7 +43,7 @@ describe('Product API 통합 테스트 (CRUD)', () => {
     storeId = store.id;
 
     const category = await prismaClient.category.create({
-      data: { name: '상의' },
+      data: { name: 'TOP' },
     });
     categoryId = category.id;
 
@@ -108,7 +108,6 @@ describe('Product API 통합 테스트 (CRUD)', () => {
   });
 
   it('필수 필드가 누락된 상품 등록 시 400 반환', async () => {
-    //name 필드를 뺀 상태
     const res = await request(app)
       .post('/products')
       .send({

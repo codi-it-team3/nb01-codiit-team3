@@ -13,7 +13,9 @@ export async function createProduct(req: Request, res: Response, next: NextFunct
       !data.price ||
       !data.storeId ||
       !data.categoryId ||
-      !Array.isArray(data.stocks)
+      !Array.isArray(data.stocks) ||
+      !Array.isArray(data.images) ||
+      data.images.length == 0
     ) {
       return next(new BadRequestError('invalid product fields'));
     }

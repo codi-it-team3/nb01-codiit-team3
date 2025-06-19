@@ -10,11 +10,17 @@ export async function createProduct(data: CreateProductDto) {
       price: data.price,
       storeId: data.storeId,
       categoryId: data.categoryId,
+      image: data.images[0],
+      discountRate: data.discountRate ?? 0,
+      discountStartTime: data.discountStartTime ? new Date(data.discountStartTime) : undefined,
+      discountEndTime: data.discountEndTime ? new Date(data.discountEndTime) : undefined,
       stocks: {
-        create: data.stocks.map((stock) => ({
-          sizeId: stock.sizeId,
-          quantity: stock.quantity,
-        })),
+        createMany: {
+          data: data.stocks.map((stock) => ({
+            sizeId: stock.sizeId,
+            quantity: stock.quantity,
+          })),
+        },
       },
     },
   });
@@ -45,7 +51,7 @@ export async function getProductList(params: ProductQuery) {
     ...(sizeId && {
       stocks: {
         some: {
-          sizeId: Number(sizeId),
+          sizeId: sizeId,
         },
       },
     }),
@@ -83,7 +89,11 @@ export async function updateProduct(id: string, data: UpdateProductDto) {
 
   return prismaClient.product.update({
     where: { id },
-    data,
+    data: {
+      ...data,
+      discountStartTime: data.discountStartTime ? new Date(data.discountStartTime) : undefined,
+      discountEndTime: data.discountEndTime ? new Date(data.discountEndTime) : undefined,
+    },
   });
 }
 

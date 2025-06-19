@@ -1,5 +1,5 @@
 export interface StockInput {
-  sizeId: number;
+  sizeId: string;
   quantity: number;
 }
 
@@ -18,6 +18,11 @@ export interface CreateProductDto {
   price: number;
   storeId: string;
   categoryId: string;
+  images: string[];
+  tags?: string[];
+  discountRate?: number;
+  discountStartTime?: string;
+  discountEndTime?: string;
   stocks: StockInput[];
 }
 
@@ -26,6 +31,8 @@ export interface UpdateProductDto {
   price?: number;
   categoryId?: string;
   discountRate?: number;
-  discountStartAt?: Date;
-  discountEndAt?: Date;
+  discountStartTime?: string;
+  discountEndTime?: string;
+  tags?: string[];
+  images?: string[];
 }
