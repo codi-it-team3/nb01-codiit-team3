@@ -1,45 +1,31 @@
-import {
-  object,
-  string,
-  integer,
-  min,
-  array,
-  nonempty,
-  optional,
-  partial,
-  coerce,
-} from 'superstruct';
+export interface StockInput {
+  sizeId: number;
+  quantity: number;
+}
 
-export const CreateProductBodyStruct = object({
-  name: coerce(nonempty(string()), string(), (v) => v.trim()),
-  price: min(integer(), 0),
-  storeId: nonempty(string()),
-  categoryId: nonempty(string()),
-  images: nonempty(array(string())),
-  tags: optional(array(string())),
-  discountRate: optional(min(integer(), 0)),
-  discountStartTime: optional(string()),
-  discountEndTime: optional(string()),
-  stocks: array(
-    object({
-      sizeId: integer(),
-      quantity: min(integer(), 0),
-    }),
-  ),
-});
+export interface ProductQuery {
+  name?: string;
+  categoryId?: string;
+  storeId?: string;
+  sizeId?: string;
+  sort?: string;
+  page?: string;
+  limit?: string;
+}
 
-export const UpdateProductBodyStruct = partial(CreateProductBodyStruct);
+export interface CreateProductDto {
+  name: string;
+  price: number;
+  storeId: string;
+  categoryId: string;
+  stocks: StockInput[];
+}
 
-export const GetProductListParamsStruct = object({
-  name: optional(string()),
-  categoryId: optional(string()),
-  storeId: optional(string()),
-  sizeId: optional(string()),
-  sort: optional(string()),
-  page: optional(coerce(min(integer(), 1), string(), Number)),
-  limit: optional(coerce(min(integer(), 1), string(), Number)),
-});
-
-export const IdParamsStruct = object({
-  id: nonempty(string()),
-});
+export interface UpdateProductDto {
+  name?: string;
+  price?: number;
+  categoryId?: string;
+  discountRate?: number;
+  discountStartAt?: Date;
+  discountEndAt?: Date;
+}
