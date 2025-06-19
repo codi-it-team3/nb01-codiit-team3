@@ -15,14 +15,13 @@ export const CreateProductBodyStruct = object({
   price: min(integer(), 0),
   storeId: nonempty(string()),
   categoryId: nonempty(string()),
-  images: nonempty(array(string())),
-  tags: optional(array(string())),
+  image: nonempty(string()),
   discountRate: optional(min(integer(), 0)),
   discountStartTime: optional(string()),
   discountEndTime: optional(string()),
   stocks: array(
     object({
-      sizeId: integer(),
+      sizeId: nonempty(array(string())),
       quantity: min(integer(), 0),
     }),
   ),

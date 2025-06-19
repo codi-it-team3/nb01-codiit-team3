@@ -14,8 +14,8 @@ export async function createProduct(req: Request, res: Response, next: NextFunct
       !data.storeId ||
       !data.categoryId ||
       !Array.isArray(data.stocks) ||
-      !Array.isArray(data.images) ||
-      data.images.length == 0
+      data.stocks.length === 0 ||
+      !data.image
     ) {
       return next(new BadRequestError('invalid product fields'));
     }
@@ -41,7 +41,7 @@ export async function getProductDetail(req: Request, res: Response, next: NextFu
   try {
     const { id } = req.params;
     const product = await productsService.getProductDetail(id);
-    if (!product) return next(new NotFoundError('product', Number(id)));
+    if (!product) return next(new NotFoundError('product', id));
     res.send(product);
   } catch (err) {
     next(err);

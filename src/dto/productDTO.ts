@@ -18,8 +18,7 @@ export interface CreateProductDto {
   price: number;
   storeId: string;
   categoryId: string;
-  images: string[];
-  tags?: string[];
+  image: string;
   discountRate?: number;
   discountStartTime?: string;
   discountEndTime?: string;

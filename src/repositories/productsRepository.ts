@@ -8,8 +8,7 @@ export async function createProduct(data: {
   discountRate?: number;
   discountStartTime?: string;
   discountEndTime?: string;
-  tags?: string[];
-  images: string[];
+  image: string[];
   stocks: { sizeId: number; quantity: number }[];
   userId: string;
 }) {
@@ -24,7 +23,7 @@ export async function createProduct(data: {
   const createdProduct = await prismaClient.product.create({
     data: {
       name: data.name,
-      image: data.images[0] ?? '',
+      image: data.image[0] ?? '',
       price: data.price,
       discountRate: data.discountRate,
       discountStartTime: data.discountStartTime ? new Date(data.discountStartTime) : undefined,

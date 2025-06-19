@@ -10,7 +10,7 @@ export async function createProduct(data: CreateProductDto) {
       price: data.price,
       storeId: data.storeId,
       categoryId: data.categoryId,
-      image: data.images[0],
+      image: data.image,
       discountRate: data.discountRate ?? 0,
       discountStartTime: data.discountStartTime ? new Date(data.discountStartTime) : undefined,
       discountEndTime: data.discountEndTime ? new Date(data.discountEndTime) : undefined,
@@ -84,7 +84,7 @@ export async function getProductDetail(id: string) {
 export async function updateProduct(id: string, data: UpdateProductDto) {
   const existing = await prismaClient.product.findUnique({ where: { id } });
   if (!existing) {
-    throw new NotFoundError('product', Number(id));
+    throw new NotFoundError('product', id);
   }
 
   return prismaClient.product.update({
@@ -100,7 +100,7 @@ export async function updateProduct(id: string, data: UpdateProductDto) {
 export async function deleteProduct(id: string) {
   const product = await prismaClient.product.findUnique({ where: { id } });
   if (!product) {
-    throw new NotFoundError('product', Number(id));
+    throw new NotFoundError('product', id);
   }
 
   await prismaClient.product.delete({ where: { id } });
