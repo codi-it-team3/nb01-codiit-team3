@@ -1,0 +1,48 @@
+import {Request, Response } from 'express';
+import { create } from 'superstruct';
+import { ACCESS_TOKEN_COOKIE_NAME, REFRESH_TOKEN_COOKIE_NAME, NODE_ENV } from '../lib/constants';
+import { LoginBodyStruct, RegisterBodyStruct } from '../structs/authStruct';
+import * as authService from '../services/authservices';
+import userResponseDTO from '../dto/userResponseDTO';
+import { UserType } from '@prisma/client';
+
+ 
+
+export async function login(req: Request, res: Response) {
+  const data = create(req.body, LoginBodyStruct);
+  const { accessToken, refreshToken } = await authService.login(data);
+  setTokenCookies(res, accessToken, refreshToken);
+  res.status(200).send();
+}
+
+export async function logout(req: Request, res: Response) {
+  clearTokenCookies(res);
+  res.status(200).send();
+}
+
+export async function refreshToken(req: Request, res: Response) {
+  const refreshToken = req.cookies[REFRESH_TOKEN_COOKIE_NAME];
+  const { accessToken, refreshToken: newRefreshToken } = await authService.refreshToken(refreshToken);
+  setTokenCookies(res, accessToken, newRefreshToken);
+  res.status(200).send();
+}
+
+
+function setTokenCookies(res: Response, accessToken: string, refreshToken: string) {
+  res.cookie(ACCESS_TOKEN_COOKIE_NAME, accessToken, {
+    httpOnly: true,
+    secure: NODE_ENV === 'production',
+    maxAge: 1 * 60 * 60 * 1000,  
+  });
+  res.cookie(REFRESH_TOKEN_COOKIE_NAME, refreshToken, {
+    httpOnly: true,
+    secure: NODE_ENV === 'production',
+    maxAge: 3 * 24 * 60 * 60 * 1000,  
+    path: '/auth/refresh',
+  });
+}
+
+function clearTokenCookies(res: Response) {
+  res.clearCookie(ACCESS_TOKEN_COOKIE_NAME);
+  res.clearCookie(REFRESH_TOKEN_COOKIE_NAME);
+}

@@ -1,0 +1,29 @@
+###
+POST http://localhost:3000/auth/register
+Content-Type: application/json 
+
+{
+  "email": "test@example.com",
+  "name": "유택",
+  "password": "1234abcd!",
+  "type": "BUYER",
+  "image": null
+}
+
+###
+POST http://localhost:3000/auth/login
+Content-Type: application/json 
+  
+{
+  "email": "test@example.com", 
+  "password": "1234abcd!"
+}
+
+###
+POST http://localhost:3000/auth/logout
+Content-Type: application/json 
+  
+{
+  "email": "test@example.com", 
+  "password": "1234abcd!"
+}

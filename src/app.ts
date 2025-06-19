@@ -5,6 +5,8 @@ import cookieParser from 'cookie-parser';
 import { PUBLIC_PATH, STATIC_PATH } from './lib/constants';
 import { defaultNotFoundHandler, globalErrorHandler } from './controllers/errorController';
 import { PORT } from './lib/constants';
+import authRouter from './router/authrouter';
+import userrouter from './router/userrouter'
 const app = express();
 
 app.use(cors());
@@ -12,10 +14,14 @@ app.use(express.json());
 app.use(cookieParser());
 app.use(STATIC_PATH, express.static(path.resolve(process.cwd(), PUBLIC_PATH)));
 
+app.use('/auth', authRouter);
+app.use('/user', authRouter);
+
 app.use(defaultNotFoundHandler);
 app.use(globalErrorHandler);
-
-
+ 
 app.listen(PORT, () => {
   console.log(`Server started on port ${PORT}`);
 });
+
+export default app;

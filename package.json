@@ -37,5 +37,8 @@
     "socket.io": "^4.8.1",
     "superstruct": "^2.0.2",
     "uuid": "^11.1.0"
-  }
+  },
+  "prisma": {
+  "seed": "ts-node prisma/seed.ts"
+}
 }
