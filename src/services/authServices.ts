@@ -7,14 +7,14 @@ import NotFoundError from '../lib/errors/NotFoundError';
 import UnauthorizedError from '../lib/errors/UnauthorizedError';
 import { RegisterUserInput } from '../types/User';  
 import { UserType } from '@prisma/client';
-import { hashPassword, verifyPassword } from '../lib/hash';
+import { hashPassword as hashPasswordUtil, verifyPassword } from '../lib/hash';
 
 export async function login(data:Pick<User, 'email' | 'password'>) {
   const user = await usersRepository.findbyEmail(data.email);
   if(!user){
     throw new BadRequestError('이메일을 확인해주세요요');
   } 
-  const verifyPasswords = await verifyPassword(data.password, user.password);
+  const verifyPasswords = await hashPasswordUtil(user.password);
   if(!verifyPasswords){
     throw new BadRequestError('비밀번호를 확인해주세요요');
   }
@@ -48,12 +48,12 @@ export async function updateMyPassword(userId: string, password: string, newPass
     throw new NotFoundError('user', userId);
   }
 
-  const isPasswordValid = await verifyPassword(password, user.password); 
+  const isPasswordValid = await verifyPassword(user.password,password); 
   if (!isPasswordValid) {
     throw new BadRequestError('Invalid credentials');
   }
 
-  const hashedPassword = await hashPassword(newPassword);
+  const hashedPassword = await hashPasswordUtil(newPassword);
   await usersRepository.updateUser(userId, { password: hashedPassword });
 } 
 

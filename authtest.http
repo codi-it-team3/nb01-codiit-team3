@@ -1,5 +1,6 @@
+//회원가입(1)
 ###
-POST http://localhost:3000/auth/register
+POST http://localhost:3000/user/register
 Content-Type: application/json 
 
 {
@@ -9,6 +10,20 @@ Content-Type: application/json
   "type": "BUYER",
   "image": null
 }
+
+//회원가입(2)
+###
+POST http://localhost:3000/user/register
+Content-Type: application/json 
+
+{
+  "email": "test3@example.com",
+  "name": "도하가",
+  "password": "1234abcd24!",
+  "type": "SELLER",
+  "image": null
+}
+
 
 ###
 POST http://localhost:3000/auth/login
@@ -21,9 +36,22 @@ Content-Type: application/json
 
 ###
 POST http://localhost:3000/auth/logout
-Content-Type: application/json 
-  
+Content-Type: application/json  
+
+//내정보보 조회
+###
+GET http://localhost:3000/user/me
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImNtYzJ4aHVpZTAwMDEzdnhrdXA2NmkydDgiLCJpYXQiOjE3NTAzMTMwNTksImV4cCI6MTc1MDMxNjY1OX0.YT3jpW9wHQMPEqyafN2erG3Ds_ErTstU8BGsjK5MNy0
+
+###
+PATCH /users/me
+Authorization: Bearer <access_token>
+Content-Type: application/json
+
 {
-  "email": "test@example.com", 
-  "password": "1234abcd!"
+  "name": "유택킹",
+  "image": "https://new.image.link",
+  "currentPassword": "1234",
+  "password": "new1234"
 }
+

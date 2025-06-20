@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+import { GradeName, PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
@@ -8,7 +8,7 @@ async function main() {
     update: {},
     create: {
       id: 'grade_green',
-      name: '그린등급',
+      name: GradeName.Green,
       rate: 0,
       minAmount: 0,
     },

@@ -19,7 +19,7 @@
     "prettier": "^3.3.2",
     "prisma": "^5.16.2",
     "supertest": "^7.1.0",
-    "ts-jest": "^29.3.2",
+    "ts-jest": "^29.4.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.8.2"
   },
@@ -39,6 +39,6 @@
     "uuid": "^11.1.0"
   },
   "prisma": {
-  "seed": "ts-node prisma/seed.ts"
-}
+    "seed": "ts-node prisma/seed.ts"
+  }
 }
