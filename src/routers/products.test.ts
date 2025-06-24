@@ -77,7 +77,7 @@ describe('Product API 통합 테스트 (CRUD)', () => {
 
   it('상품을 등록할 수 있다', async () => {
     const res = await request(app)
-      .post('/products')
+      .post('/api/products')
       .send({
         name: '테스트 상품',
         price: 15000,
@@ -98,7 +98,7 @@ describe('Product API 통합 테스트 (CRUD)', () => {
 
   it('stocks 없이 수정 테스트용 상품을 등록한다', async () => {
     const res = await request(app)
-      .post('/products')
+      .post('/api/products')
       .send({
         name: '수정 테스트 상품',
         price: 17000,
@@ -115,7 +115,7 @@ describe('Product API 통합 테스트 (CRUD)', () => {
 
   it('할인 기간과 할인율이 반영된 상품을 등록할 수 있다', async () => {
     const res = await request(app)
-      .post('/products')
+      .post('/api/products')
       .send({
         name: '할인 상품',
         price: 20000,
@@ -136,7 +136,7 @@ describe('Product API 통합 테스트 (CRUD)', () => {
   });
 
   it('상품 목록을 조회할 수 있다', async () => {
-    const res = await request(app).get('/products');
+    const res = await request(app).get('/api/products');
 
     expect(res.status).toBe(200);
     expect(Array.isArray(res.body.list)).toBe(true);
@@ -145,7 +145,7 @@ describe('Product API 통합 테스트 (CRUD)', () => {
   });
 
   it('상품 상세를 조회할 수 있다', async () => {
-    const res = await request(app).get(`/products/${productId}`);
+    const res = await request(app).get(`/api/products/${productId}`);
 
     expect(res.status).toBe(200);
     expect(res.body.id).toBe(productId);
@@ -156,31 +156,29 @@ describe('Product API 통합 테스트 (CRUD)', () => {
   });
 
   it('상품을 수정할 수 있다', async () => {
-    const res = await request(app).patch(`/products/${productId}`).send({
-      price: 9900,
-    });
+    const res = await request(app).patch(`/api/products/${productId}`).send({ price: 9900 });
 
     expect(res.status).toBe(200);
     expect(res.body.price).toBe(9900);
   });
 
   it('stocks 없이 상품을 수정할 수 있다', async () => {
-    const updateRes = await request(app).patch(`/products/${productIdForUpdate}`).send({
-      name: '수정된 상품명',
-    });
+    const updateRes = await request(app)
+      .patch(`/api/products/${productIdForUpdate}`)
+      .send({ name: '수정된 상품명' });
 
     expect(updateRes.status).toBe(200);
     expect(updateRes.body.name).toBe('수정된 상품명');
   });
 
   it('상품을 삭제할 수 있다', async () => {
-    const res = await request(app).delete(`/products/${productId}`);
+    const res = await request(app).delete(`/api/products/${productId}`);
     expect(res.status).toBe(204);
   });
 
   it('필수 필드가 누락된 상품 등록 시 400 반환', async () => {
     const res = await request(app)
-      .post('/products')
+      .post('/api/products')
       .send({
         price: 10000,
         storeId,
@@ -193,33 +191,33 @@ describe('Product API 통합 테스트 (CRUD)', () => {
   });
 
   it('이미 삭제된 상품 조회 시 404 반환', async () => {
-    const res = await request(app).get(`/products/${productId}`);
+    const res = await request(app).get(`/api/products/${productId}`);
     expect(res.status).toBe(404);
     expect(res.body.message).toBe(`product with id ${productId} not found`);
   });
 
   it('존재하지 않는 상품 ID로 상세 조회 시 404 반환', async () => {
-    const res = await request(app).get('/products/99999999');
+    const res = await request(app).get('/api/products/99999999');
     expect(res.status).toBe(404);
     expect(res.body.message).toBe(`product with id 99999999 not found`);
   });
 
   it('존재하지 않는 상품 ID로 수정 시 404 반환', async () => {
-    const res = await request(app).patch('/products/99999999').send({ price: 9999 });
+    const res = await request(app).patch('/api/products/99999999').send({ price: 9999 });
     expect(res.status).toBe(404);
     expect(res.body.message).toBe(`product with id 99999999 not found`);
   });
 
   it('존재하지 않는 상품 ID로 삭제 시 404 반환', async () => {
     const nonExistentId = '99999999';
-    const res = await request(app).delete(`/products/${nonExistentId}`);
+    const res = await request(app).delete(`/api/products/${nonExistentId}`);
     expect(res.status).toBe(404);
     expect(res.body.message).toBe(`product with id ${nonExistentId} not found`);
   });
 
   it('할인 기간 없이 할인율만 포함해 등록할 수 있다', async () => {
     const res = await request(app)
-      .post('/products')
+      .post('/api/products')
       .send({
         name: '할인율만 상품',
         price: 18000,
@@ -238,7 +236,7 @@ describe('Product API 통합 테스트 (CRUD)', () => {
   });
 
   it('파라미터 없이 기본 목록 조회 시 최신순으로 반환된다', async () => {
-    const res = await request(app).get('/products');
+    const res = await request(app).get('/api/products');
 
     expect(res.status).toBe(200);
     expect(Array.isArray(res.body.list)).toBe(true);
@@ -248,7 +246,7 @@ describe('Product API 통합 테스트 (CRUD)', () => {
 
   describe('상품 목록 정렬 및 필터 테스트', () => {
     it('가격 오름차순 정렬이 적용된다', async () => {
-      const res = await request(app).get('/products?sort=price_low');
+      const res = await request(app).get('/api/products?sort=price_low');
       expect(res.status).toBe(200);
 
       const prices = (res.body.list as ProductListItem[]).map((p) => p.price);
@@ -257,7 +255,7 @@ describe('Product API 통합 테스트 (CRUD)', () => {
     });
 
     it('가격 내림차순 정렬이 적용된다', async () => {
-      const res = await request(app).get('/products?sort=price_high');
+      const res = await request(app).get('/api/products?sort=price_high');
       expect(res.status).toBe(200);
 
       const prices = (res.body.list as ProductListItem[]).map((p) => p.price);
@@ -266,7 +264,7 @@ describe('Product API 통합 테스트 (CRUD)', () => {
     });
 
     it('카테고리 ID로 필터링할 수 있다', async () => {
-      const res = await request(app).get(`/products?categoryId=${categoryId}`);
+      const res = await request(app).get(`/api/products?categoryId=${categoryId}`);
       expect(res.status).toBe(200);
       expect((res.body.list as ProductListItem[]).every((p) => p.categoryId === categoryId)).toBe(
         true,
@@ -274,7 +272,7 @@ describe('Product API 통합 테스트 (CRUD)', () => {
     });
 
     it('이름 검색 필터가 적용된다', async () => {
-      const res = await request(app).get('/products?name=테스트');
+      const res = await request(app).get('/api/products?name=테스트');
       expect(res.status).toBe(200);
       expect((res.body.list as ProductListItem[]).every((p) => p.name.includes('테스트'))).toBe(
         true,
@@ -282,7 +280,7 @@ describe('Product API 통합 테스트 (CRUD)', () => {
     });
 
     it('최소/최대 가격 필터가 적용된다', async () => {
-      const res = await request(app).get('/products?minPrice=10000&maxPrice=20000');
+      const res = await request(app).get('/api/products?minPrice=10000&maxPrice=20000');
       expect(res.status).toBe(200);
       expect(
         (res.body.list as ProductListItem[]).every((p) => p.price >= 10000 && p.price <= 20000),
@@ -290,7 +288,7 @@ describe('Product API 통합 테스트 (CRUD)', () => {
     });
 
     it('비어있는 목록 조회 시 빈 배열을 반환한다', async () => {
-      const res = await request(app).get('/products?name=존재하지않는상품이름');
+      const res = await request(app).get('/api/products?name=존재하지않는상품이름');
       expect(res.status).toBe(200);
       expect(res.body.list).toEqual([]);
       expect(res.body.total).toBe(0);

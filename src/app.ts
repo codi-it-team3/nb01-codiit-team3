@@ -15,7 +15,7 @@ app.use(express.json());
 app.use(cookieParser());
 app.use(STATIC_PATH, express.static(path.resolve(process.cwd(), PUBLIC_PATH)));
 
-app.use('/products', productsRouter);
+app.use('/api/products', productsRouter);
 
 app.use(defaultNotFoundHandler);
 app.use(globalErrorHandler);
