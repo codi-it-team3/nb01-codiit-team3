@@ -6,9 +6,7 @@ import authMiddleware from '../middlewares/authMiddleware';
 import multer from 'multer';
 const upload = multer();
 
-const router = express.Router();
-
-console.log('✅ userrouter 연결됨');
+const router = express.Router(); 
 
 router.post('/', asyncHandler(userControllers.register));
 router.get('/me', authMiddleware, userControllers.getMyInfo);

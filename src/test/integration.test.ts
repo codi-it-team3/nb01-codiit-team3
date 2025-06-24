@@ -48,6 +48,18 @@ describe('Auth API 통합 테스트', () => {
       });
     }
   });
+    afterAll(async () => { 
+    await prismaClient.user.deleteMany({
+      where: {
+        email: userInfo.email,
+      },
+    }); 
+    await prismaClient.user.deleteMany({
+      where: {
+        email: 'buyer@codiit.com', 
+      },
+    });
+  });
 
   test('POST /api/users | 회원가입 성공', async () => {
     const res = await request(app).post('/api/users').send(userInfo);
@@ -218,5 +230,5 @@ describe('Auth API 통합 테스트', () => {
       expect(res.status).toBe(404);
       expect(res.body.message).toBe('유저를 찾을 수 없습니다.');
     });
-  });
+  }); 
 });

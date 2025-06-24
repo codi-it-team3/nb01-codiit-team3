@@ -4,7 +4,7 @@ import BadRequestError from '../lib/errors/BadRequestError';
 import NotFoundError from '../lib/errors/NotFoundError';
 import UnauthorizedError from '../lib/errors/UnauthorizedError';
 import ForbiddenError from '../lib/errors/ForbiddenError';
-import ConflictError from '../lib/errors/ConflictError'; // ✅ 이거 추가
+import ConflictError from '../lib/errors/ConflictError';  
 
 export function defaultNotFoundHandler(req: Request, res: Response, next: NextFunction) {
   res.status(404).send({ message: 'Not found' });

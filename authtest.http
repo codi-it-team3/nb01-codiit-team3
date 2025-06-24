@@ -1,6 +1,6 @@
 //회원가입(1)
 ###
-POST http://localhost:3000/api/user/
+POST http://localhost:3000/api/users/
 Content-Type: application/json 
 
 {
@@ -13,7 +13,7 @@ Content-Type: application/json
 
 //회원가입(2)
 ###
-POST http://localhost:3000/api/user/
+POST http://localhost:3000/api/users/
 Content-Type: application/json 
 
 {
@@ -40,14 +40,14 @@ Content-Type: application/json
 
 //내정보보 조회
 ###
-GET http://localhost:3000/api/user/me
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImNtYzh0dGx1aDAwMDFjbW03YnY3amtnNWkiLCJpYXQiOjE3NTA2NjY4NTQsImV4cCI6MTc1MDY3MDQ1NH0.DMY95Xv33G5M9HMkCfpGwrvt4mhfXZ0eHOEi5FyLTAs
+GET http://localhost:3000/api/users/me
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImNtY2EzZnRvYzAwMDFvYmFidjZ4ZWJvZmwiLCJpYXQiOjE3NTA3NDk4ODYsImV4cCI6MTc1MDc1MzQ4Nn0.lt33g0WtbwMZCeU_k3FVcJMvOKhL5O01rLnpDgYhaOE
 
 
 ###
-PATCH http://localhost:3000/api/user/me
+PATCH http://localhost:3000/api/users//me
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImNtYzh0dGx1aDAwMDFjbW03YnY3amtnNWkiLCJpYXQiOjE3NTA2NjY4NTQsImV4cCI6MTc1MDY3MDQ1NH0.DMY95Xv33G5M9HMkCfpGwrvt4mhfXZ0eHOEi5FyLTAs
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImNtY2EzZnRvYzAwMDFvYmFidjZ4ZWJvZmwiLCJpYXQiOjE3NTA3NDk4ODYsImV4cCI6MTc1MDc1MzQ4Nn0.lt33g0WtbwMZCeU_k3FVcJMvOKhL5O01rLnpDgYhaOE
 
 {
   "name": "유택킹",

@@ -10,15 +10,12 @@ import asyncHandler from '../lib/asyncHandler';
 import UnauthorizedError from '../lib/errors/UnauthorizedError';
 import { UpdateMyInfoBodyStruct, DeleteMyAccountBodyStruct } from '../structs/usersStructs';
 
-export async function register(req: Request, res: Response) {
-  console.log('🔥🔥🔥 register controller 진입');
-  const data = create(req.body, RegisterBodyStruct);
-  console.log('✅ validated data:', data);
+export async function register(req: Request, res: Response) { 
+  const data = create(req.body, RegisterBodyStruct); 
   const user = await userService.register({
     ...data,
     type: UserType[data.type as keyof typeof UserType],
-  });
-  console.log('🧑‍💻 생성된 user:', user);
+  }); 
   res.status(201).json(userResponseDTO(user));
 }
 
@@ -28,8 +25,7 @@ export const getMyInfo = asyncHandler(async (req: Request, res: Response) => {
   res.json(user);
 });
 
-export const updateMyInfo = asyncHandler(async (req: Request, res: Response) => {
-  console.log('🧠 req.user:', req.user);
+export const updateMyInfo = asyncHandler(async (req: Request, res: Response) => { 
   if (!req.user) throw new UnauthorizedError('로그인 필요');
 
   const body = create(req.body, UpdateMyInfoBodyStruct);
