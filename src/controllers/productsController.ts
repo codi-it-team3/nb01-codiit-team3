@@ -15,7 +15,8 @@ export async function createProduct(req: Request, res: Response, next: NextFunct
       !data.categoryId ||
       !Array.isArray(data.stocks) ||
       data.stocks.length === 0 ||
-      !data.image
+      !data.image ||
+      !data.content
     ) {
       return next(new BadRequestError('invalid product fields'));
     }
@@ -30,8 +31,10 @@ export async function createProduct(req: Request, res: Response, next: NextFunct
 export async function getProductList(req: Request, res: Response, next: NextFunction) {
   try {
     const params = req.query as ProductQuery;
-    const list = await productsService.getProductList(params);
-    res.send({ list });
+
+    const { list, total, page } = await productsService.getProductList(params);
+
+    res.status(200).json({ list, total, page });
   } catch (err) {
     next(err);
   }
@@ -40,8 +43,11 @@ export async function getProductList(req: Request, res: Response, next: NextFunc
 export async function getProductDetail(req: Request, res: Response, next: NextFunction) {
   try {
     const { id } = req.params;
+
     const product = await productsService.getProductDetail(id);
+
     if (!product) return next(new NotFoundError('product', id));
+
     res.send(product);
   } catch (err) {
     next(err);
@@ -53,6 +59,7 @@ export async function updateProduct(req: Request, res: Response, next: NextFunct
     const { id } = req.params;
     const data = req.body as UpdateProductDto;
     const updated = await productsService.updateProduct(id, data);
+
     res.send(updated);
   } catch (err) {
     next(err);
@@ -63,6 +70,7 @@ export async function deleteProduct(req: Request, res: Response, next: NextFunct
   try {
     const { id } = req.params;
     await productsService.deleteProduct(id);
+
     res.status(204).send();
   } catch (err) {
     next(err);

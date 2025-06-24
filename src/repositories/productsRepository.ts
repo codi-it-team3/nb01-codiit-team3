@@ -8,7 +8,7 @@ export async function createProduct(data: {
   discountRate?: number;
   discountStartTime?: string;
   discountEndTime?: string;
-  image: string[];
+  image: string;
   stocks: { sizeId: number; quantity: number }[];
   userId: string;
 }) {
@@ -23,7 +23,7 @@ export async function createProduct(data: {
   const createdProduct = await prismaClient.product.create({
     data: {
       name: data.name,
-      image: data.image[0] ?? '',
+      image: data.image,
       price: data.price,
       discountRate: data.discountRate,
       discountStartTime: data.discountStartTime ? new Date(data.discountStartTime) : undefined,
@@ -69,8 +69,7 @@ export async function updateProduct(
     discountRate?: number;
     discountStartTime?: string;
     discountEndTime?: string;
-    tags?: string[];
-    images?: string[];
+    image?: string;
   }>,
 ) {
   return await prismaClient.product.update({
@@ -79,7 +78,6 @@ export async function updateProduct(
       ...data,
       discountStartTime: data.discountStartTime ? new Date(data.discountStartTime) : undefined,
       discountEndTime: data.discountEndTime ? new Date(data.discountEndTime) : undefined,
-      image: data.images?.[0],
     },
   });
 }

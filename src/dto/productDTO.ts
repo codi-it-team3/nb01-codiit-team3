@@ -11,6 +11,10 @@ export interface ProductQuery {
   sort?: string;
   page?: string;
   limit?: string;
+  storeName?: string;
+  minPrice?: string;
+  maxPrice?: string;
+  favoriteOnly?: string;
 }
 
 export interface CreateProductDto {
@@ -18,20 +22,29 @@ export interface CreateProductDto {
   price: number;
   storeId: string;
   categoryId: string;
+  content?: string;
   image: string;
   discountRate?: number;
   discountStartTime?: string;
   discountEndTime?: string;
-  stocks: StockInput[];
+  stocks: {
+    sizeId: string;
+    quantity: number;
+  }[];
 }
 
 export interface UpdateProductDto {
   name?: string;
   price?: number;
   categoryId?: string;
+  content?: string;
   discountRate?: number;
   discountStartTime?: string;
   discountEndTime?: string;
-  tags?: string[];
-  images?: string[];
+  image?: string[];
+
+  stocks: {
+    sizeId: string;
+    quantity: number;
+  }[];
 }
