@@ -22,5 +22,4 @@ export type RegisterUserInput = {
   type: UserType;
 };
 
-
 export default User;

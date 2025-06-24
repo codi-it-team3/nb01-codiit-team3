@@ -1,36 +1,43 @@
-import bcrypt from 'bcrypt'
-import *as usersRepository from '../repositories/usersRepository' 
-import User from '../types/User';  
+import bcrypt from 'bcrypt';
+import * as usersRepository from '../repositories/usersRepository';
+import User from '../types/User';
 import BadRequestError from '../lib/errors/BadRequestError';
-import { generateToken, verifyAccessToken, verfiyRefreshToken } from '../lib/token';
+import { generateToken, verifyAccessToken, verifyRefreshToken } from '../lib/token';
 import NotFoundError from '../lib/errors/NotFoundError';
 import UnauthorizedError from '../lib/errors/UnauthorizedError';
-import { RegisterUserInput } from '../types/User';  
+import { RegisterUserInput } from '../types/User';
 import { UserType } from '@prisma/client';
 import { hashPassword as hashPasswordUtil, verifyPassword } from '../lib/hash';
 
-export async function login(data:Pick<User, 'email' | 'password'>) {
+export async function login(data: Pick<User, 'email' | 'password'>) {
   const user = await usersRepository.findbyEmail(data.email);
-  if(!user){
-    throw new BadRequestError('이메일을 확인해주세요요');
-  } 
-  const verifyPasswords = await hashPasswordUtil(user.password);
-  if(!verifyPasswords){
-    throw new BadRequestError('비밀번호를 확인해주세요요');
+  if (!user) {
+    throw new NotFoundError('User', data.email);
   }
-  const {accessToken, refreshToken} = generateToken(user.id);
+
+  const isPasswordCorrect = await verifyPassword(data.password, user.password);
+  if (!isPasswordCorrect) {
+    throw new UnauthorizedError('이메일 또는 비밀번호가 올바르지 않습니다.');
+  }
+
+  const { accessToken, refreshToken } = generateToken(user.id);
   await usersRepository.updateUser(user.id, { refreshToken });
+
   return {
-    accessToken,refreshToken
-  }
+    accessToken,
+    refreshToken,
+    user,
+  };
 }
 
-export async function refreshToken(refreshToken?: string): Promise<{ accessToken: string; refreshToken: string }> {
+export async function refreshToken(
+  refreshToken?: string,
+): Promise<{ accessToken: string; refreshToken: string }> {
   if (!refreshToken) {
     throw new BadRequestError('Invalid refresh token');
   }
 
-  const { userId } = verfiyRefreshToken(refreshToken);
+  const { userId } = verifyRefreshToken(refreshToken);
   const user = await usersRepository.getUser(userId);
 
   if (!user) {
@@ -48,24 +55,34 @@ export async function updateMyPassword(userId: string, password: string, newPass
     throw new NotFoundError('user', userId);
   }
 
-  const isPasswordValid = await verifyPassword(user.password,password); 
+  const isPasswordValid = await verifyPassword(user.password, password);
   if (!isPasswordValid) {
     throw new BadRequestError('Invalid credentials');
   }
 
   const hashedPassword = await hashPasswordUtil(newPassword);
   await usersRepository.updateUser(userId, { password: hashedPassword });
-} 
+}
 
 export async function authenticate(accessToken?: string) {
   if (!accessToken) {
     throw new UnauthorizedError('Unauthorized');
   }
 
-  const { userId } = verifyAccessToken(accessToken);
-  const user = await usersRepository.getUser(userId);
+  const { id } = verifyAccessToken(accessToken);
+  const user = await usersRepository.getUser(id);
   if (!user) {
     throw new UnauthorizedError('Unauthorized');
   }
   return user;
+}
+
+export async function logout(userId: string) {
+  if (!userId) {
+    throw new UnauthorizedError('로그인된 사용자가 아닙니다.');
+  }
+
+  await usersRepository.updateUser(userId, { refreshToken: null });
+
+  return { message: '성공적으로 로그아웃되었습니다.' };
 }

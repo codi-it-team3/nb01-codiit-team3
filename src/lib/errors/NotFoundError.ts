@@ -1,7 +1,9 @@
 class NotFoundError extends Error {
+  statusCode: number;
   constructor(modelName: string, id: string) {
-    super(`${modelName} with id ${id} not found`);
+    super(`${modelName}`);
     this.name = 'NotFoundError';
+    this.statusCode = 404;
   }
 }
 

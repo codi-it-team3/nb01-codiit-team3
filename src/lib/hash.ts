@@ -5,6 +5,6 @@ export async function hashPassword(password: string): Promise<string> {
   return await bcrypt.hash(password, salt);
 }
 
-export async function verifyPassword(  plain: string,hashed: string): Promise<boolean> {
+export async function verifyPassword(plain: string, hashed: string): Promise<boolean> {
   return await bcrypt.compare(plain, hashed);
-} 
+}

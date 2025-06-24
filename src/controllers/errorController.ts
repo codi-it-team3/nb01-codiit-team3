@@ -4,6 +4,7 @@ import BadRequestError from '../lib/errors/BadRequestError';
 import NotFoundError from '../lib/errors/NotFoundError';
 import UnauthorizedError from '../lib/errors/UnauthorizedError';
 import ForbiddenError from '../lib/errors/ForbiddenError';
+import ConflictError from '../lib/errors/ConflictError'; // ✅ 이거 추가
 
 export function defaultNotFoundHandler(req: Request, res: Response, next: NextFunction) {
   res.status(404).send({ message: 'Not found' });
@@ -31,7 +32,7 @@ export function globalErrorHandler(err: Error, req: Request, res: Response, next
 
   /** Application errors */
   if (err instanceof NotFoundError) {
-    res.status(404).send({ message: err.message });
+    res.status(404).send({ message: err.message, statusCode: 404, error: 'Not Found' });
     return;
   }
 
@@ -42,6 +43,15 @@ export function globalErrorHandler(err: Error, req: Request, res: Response, next
 
   if (err instanceof ForbiddenError) {
     res.status(403).send({ message: err.message });
+    return;
+  }
+
+  if (err instanceof ConflictError) {
+    res.status(409).send({
+      message: err.message,
+      statusCode: err.statusCode,
+      error: err.error,
+    });
     return;
   }
 

@@ -5,11 +5,10 @@ export const RegisterBodyStruct = object({
   name: nonempty(string()),
   password: nonempty(string()),
   image: nullable(string()),
-  type: enums(['BUYER', 'SELLER']), 
+  type: enums(['BUYER', 'SELLER']),
 });
 
 export const LoginBodyStruct = object({
   email: nonempty(string()),
   password: nonempty(string()),
 });
-
