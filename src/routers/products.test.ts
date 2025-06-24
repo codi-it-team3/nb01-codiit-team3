@@ -293,5 +293,59 @@ describe('Product API 통합 테스트 (CRUD)', () => {
       expect(res.body.list).toEqual([]);
       expect(res.body.total).toBe(0);
     });
+
+    it('리뷰 평점 정렬이 적용된다', async () => {
+      const res = await request(app).get('/api/products?sort=rating');
+      expect(res.status).toBe(200);
+
+      const ratings = (res.body.list as ProductListItem[]).map((p) => p.reviewsCount);
+      const sorted = [...ratings].sort((a, b) => b - a);
+      expect(ratings).toEqual(sorted);
+    });
+
+    it('리뷰 수 정렬이 적용된다', async () => {
+      const res = await request(app).get('/api/products?sort=review');
+      expect(res.status).toBe(200);
+
+      const reviewCounts = (res.body.list as ProductListItem[]).map((p) => p.reviewsCount);
+      const sorted = [...reviewCounts].sort((a, b) => b - a);
+      expect(reviewCounts).toEqual(sorted);
+    });
+
+    it('판매량 정렬이 적용된다', async () => {
+      const res = await request(app).get('/api/products?sort=sales');
+      expect(res.status).toBe(200);
+
+      const salesCounts = (res.body.list as ProductListItem[]).map((p) => p.sales);
+      const sorted = [...salesCounts].sort((a, b) => b - a);
+      expect(salesCounts).toEqual(sorted);
+    });
+
+    it('즐겨찾기한 스토어의 상품만 필터링된다', async () => {
+      const user = await prismaClient.user.create({
+        data: {
+          name: '즐겨찾기 유저',
+          email: 'favorite@example.com',
+          password: 'hashed',
+          gradeId: 'grade_green',
+        },
+      });
+
+      await prismaClient.favoriteStore.create({
+        data: {
+          userId: user.id,
+          storeId,
+        },
+      });
+
+      const fullRes = await request(app).get('/api/products');
+      const fullCount = fullRes.body.total;
+
+      const filteredRes = await request(app)
+        .get('/api/products?favoriteOnly=true')
+        .set('x-user-id', user.id);
+      expect(filteredRes.status).toBe(200);
+      expect(filteredRes.body.total).toBeLessThanOrEqual(fullCount);
+    });
   });
 });
