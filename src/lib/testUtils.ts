@@ -24,6 +24,6 @@ export async function clearDatabase(prismaClient: PrismaClient) {
   await prismaClient.category.deleteMany();
   await prismaClient.store.deleteMany();
   await prismaClient.size.deleteMany();
-  await prismaClient.grade.deleteMany();
   await prismaClient.user.deleteMany();
+  await prismaClient.grade.deleteMany();
 }
