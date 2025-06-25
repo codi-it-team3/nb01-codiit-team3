@@ -3,6 +3,14 @@ import app from '../app';
 import { prismaClient } from '../lib/prismaClient';
 import { clearDatabase } from '../lib/testUtils';
 
+type StockItem = {
+  sizeId: string;
+};
+
+type StoreInfo = {
+  name: string;
+};
+
 type ProductListItem = {
   id: string;
   name: string;
@@ -15,6 +23,11 @@ type ProductListItem = {
   categoryId: string;
   image: string;
   createdAt: string;
+};
+
+type ProductListItemWithStoreAndStocks = ProductListItem & {
+  stocks: StockItem[];
+  store: StoreInfo;
 };
 
 describe('Product API 통합 테스트 (CRUD)', () => {
@@ -75,6 +88,8 @@ describe('Product API 통합 테스트 (CRUD)', () => {
     await prismaClient.$disconnect();
   });
 
+  let createdProductForFilter: ProductListItemWithStoreAndStocks;
+
   it('상품을 등록할 수 있다', async () => {
     const res = await request(app)
       .post('/api/products')
@@ -94,6 +109,9 @@ describe('Product API 통합 테스트 (CRUD)', () => {
     expect(res.body.content).toBe('상세 설명');
     expect(res.body.image).toBeDefined();
     productId = res.body.id;
+
+    const detail = await request(app).get(`/api/products/${productId}`);
+    createdProductForFilter = detail.body as ProductListItemWithStoreAndStocks;
   });
 
   it('stocks 없이 수정 테스트용 상품을 등록한다', async () => {
@@ -346,6 +364,30 @@ describe('Product API 통합 테스트 (CRUD)', () => {
         .set('x-user-id', user.id);
       expect(filteredRes.status).toBe(200);
       expect(filteredRes.body.total).toBeLessThanOrEqual(fullCount);
+    });
+
+    it('사이즈 ID로 필터링할 수 있다', async () => {
+      const sizeId = createdProductForFilter.stocks[0].sizeId;
+      const res = await request(app).get(`/api/products?sizeId=${sizeId}`);
+      expect(res.status).toBe(200);
+      expect(
+        (res.body.list as ProductListItemWithStoreAndStocks[]).every((p) =>
+          p.stocks.some((s) => s.sizeId === sizeId),
+        ),
+      ).toBe(true);
+    });
+
+    it('스토어명으로 검색할 수 있다', async () => {
+      const storeName = '테스트스토어';
+      const res = await request(app).get(
+        `/api/products?storeName=${encodeURIComponent(storeName)}`,
+      );
+      expect(res.status).toBe(200);
+      expect(
+        (res.body.list as ProductListItemWithStoreAndStocks[]).every((p) =>
+          p.store.name.toLowerCase().includes(storeName.toLowerCase()),
+        ),
+      ).toBe(true);
     });
   });
 });
