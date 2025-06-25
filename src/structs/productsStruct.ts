@@ -21,7 +21,7 @@ export const CreateProductBodyStruct = object({
   discountEndTime: optional(string()),
   stocks: array(
     object({
-      sizeId: nonempty(array(string())),
+      sizeId: nonempty(string()),
       quantity: min(integer(), 0),
     }),
   ),
@@ -37,8 +37,4 @@ export const GetProductListParamsStruct = object({
   sort: optional(string()),
   page: optional(coerce(min(integer(), 1), string(), Number)),
   limit: optional(coerce(min(integer(), 1), string(), Number)),
-});
-
-export const IdParamsStruct = object({
-  id: nonempty(string()),
 });

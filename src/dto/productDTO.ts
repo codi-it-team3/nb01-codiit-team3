@@ -41,9 +41,9 @@ export interface UpdateProductDto {
   discountRate?: number;
   discountStartTime?: string;
   discountEndTime?: string;
-  image?: string[];
+  image?: string;
 
-  stocks: {
+  stocks?: {
     sizeId: string;
     quantity: number;
   }[];
