@@ -16,6 +16,7 @@ export const CreateProductBodyStruct = object({
   storeId: nonempty(string()),
   categoryId: nonempty(string()),
   image: nonempty(string()),
+  content: nonempty(string()),
   discountRate: optional(min(integer(), 0)),
   discountStartTime: optional(string()),
   discountEndTime: optional(string()),

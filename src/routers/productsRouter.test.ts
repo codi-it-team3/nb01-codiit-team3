@@ -205,7 +205,8 @@ describe('Product API 통합 테스트 (CRUD)', () => {
       });
 
     expect(res.status).toBe(400);
-    expect(res.body.message).toBe('invalid product fields');
+    expect(res.body.message).toContain('At path: name');
+    expect(res.body.message).toContain('Expected');
   });
 
   it('이미 삭제된 상품 조회 시 404 반환', async () => {
@@ -221,9 +222,10 @@ describe('Product API 통합 테스트 (CRUD)', () => {
   });
 
   it('존재하지 않는 상품 ID로 수정 시 404 반환', async () => {
-    const res = await request(app).patch('/api/products/99999999').send({ price: 9999 });
+    const nonExistentId = '99999999';
+    const res = await request(app).patch(`/api/products/${nonExistentId}`).send({ price: 9999 });
     expect(res.status).toBe(404);
-    expect(res.body.message).toBe(`product with id 99999999 not found`);
+    expect(res.body.message).toBe(`product with id ${nonExistentId} not found`);
   });
 
   it('존재하지 않는 상품 ID로 삭제 시 404 반환', async () => {

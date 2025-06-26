@@ -6,13 +6,14 @@ import {
   updateProduct,
   deleteProduct,
 } from '../controllers/productsController';
+import { withAsync } from '../lib/withAsync';
 
 const router = Router();
 
-router.post('/', createProduct);
-router.get('/', getProductList);
-router.get('/:id', getProductDetail);
-router.patch('/:id', updateProduct);
-router.delete('/:id', deleteProduct);
+router.post('/', withAsync(createProduct));
+router.get('/', withAsync(getProductList));
+router.get('/:id', withAsync(getProductDetail));
+router.patch('/:id', withAsync(updateProduct));
+router.delete('/:id', withAsync(deleteProduct));
 
 export default router;

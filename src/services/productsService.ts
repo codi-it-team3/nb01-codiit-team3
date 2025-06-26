@@ -1,9 +1,9 @@
 import { Prisma } from '@prisma/client';
 import { prismaClient } from '../lib/prismaClient';
-import { CreateProductDto, UpdateProductDto, ProductQuery } from '../dto/productDTO';
+import { CreateProductInput, UpdateProductInput, ProductQuery } from '../types/product';
 import NotFoundError from '../lib/errors/NotFoundError';
 
-export async function createProduct(data: CreateProductDto) {
+export async function createProduct(data: CreateProductInput) {
   const store = await prismaClient.store.findUnique({ where: { id: data.storeId } });
   if (!store) throw new NotFoundError('store', data.storeId);
 
@@ -244,7 +244,7 @@ export async function getProductDetail(id: string) {
   };
 }
 
-export async function updateProduct(id: string, data: UpdateProductDto) {
+export async function updateProduct(id: string, data: UpdateProductInput) {
   const existing = await prismaClient.product.findUnique({ where: { id } });
   if (!existing) throw new NotFoundError('product', id);
 
@@ -264,13 +264,17 @@ export async function updateProduct(id: string, data: UpdateProductDto) {
     const updatedProduct = await tx.product.update({
       where: { id },
       data: {
-        ...(data.name && { name: data.name }),
-        ...(data.price && { price: data.price }),
-        ...(data.discountRate && { discountRate: data.discountRate }),
-        ...(data.discountStartTime && { discountStartTime: new Date(data.discountStartTime) }),
-        ...(data.discountEndTime && { discountEndTime: new Date(data.discountEndTime) }),
-        ...(data.categoryId && { category: { connect: { id: data.categoryId } } }),
-        ...(data.content && { content: data.content }),
+        ...(data.name !== undefined && { name: data.name }),
+        ...(data.price !== undefined && { price: data.price }),
+        ...(data.discountRate !== undefined && { discountRate: data.discountRate }),
+        ...(data.discountStartTime !== undefined && {
+          discountStartTime: new Date(data.discountStartTime),
+        }),
+        ...(data.discountEndTime !== undefined && {
+          discountEndTime: new Date(data.discountEndTime),
+        }),
+        ...(data.categoryId !== undefined && { category: { connect: { id: data.categoryId } } }),
+        ...(data.content !== undefined && { content: data.content }),
       },
     });
 

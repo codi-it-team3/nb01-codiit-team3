@@ -17,7 +17,7 @@ export interface ProductQuery {
   favoriteOnly?: string;
 }
 
-export interface CreateProductDto {
+export interface CreateProductInput {
   name: string;
   price: number;
   storeId: string;
@@ -33,7 +33,7 @@ export interface CreateProductDto {
   }[];
 }
 
-export interface UpdateProductDto {
+export interface UpdateProductInput {
   name?: string;
   price?: number;
   categoryId?: string;

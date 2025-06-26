@@ -1,13 +1,14 @@
 import { prismaClient } from '../lib/prismaClient';
-import { CreateProductDto, UpdateProductDto } from '../dto/productDTO';
+import { CreateProductInput, UpdateProductInput } from '../types/product';
+import NotFoundError from '../lib/errors/NotFoundError';
 
-export async function createProduct(data: CreateProductDto & { userId: string }) {
+export async function createProduct(data: CreateProductInput & { userId: string }) {
   const store = await prismaClient.store.findUnique({
     where: { userId: data.userId },
   });
 
   if (!store) {
-    throw new Error('해당 유저의 스토어가 존재하지 않습니다.');
+    throw new NotFoundError('store of user', data.userId);
   }
 
   return await prismaClient.product.create({
@@ -35,7 +36,7 @@ export async function createProduct(data: CreateProductDto & { userId: string })
   });
 }
 
-export async function updateProduct(productId: string, data: UpdateProductDto) {
+export async function updateProduct(productId: string, data: UpdateProductInput) {
   const {
     name,
     price,
@@ -50,14 +51,14 @@ export async function updateProduct(productId: string, data: UpdateProductDto) {
   return await prismaClient.product.update({
     where: { id: productId },
     data: {
-      ...(name && { name }),
-      ...(price && { price }),
-      ...(content && { content }),
+      ...(name !== undefined && { name }),
+      ...(price !== undefined && { price }),
+      ...(content !== undefined && { content }),
       ...(discountRate !== undefined && { discountRate }),
-      ...(discountStartTime && { discountStartTime: new Date(discountStartTime) }),
-      ...(discountEndTime && { discountEndTime: new Date(discountEndTime) }),
-      ...(image && { image: typeof image === 'string' ? image : image[0] }),
-      ...(categoryId && { category: { connect: { id: categoryId } } }),
+      ...(discountStartTime !== undefined && { discountStartTime: new Date(discountStartTime) }),
+      ...(discountEndTime !== undefined && { discountEndTime: new Date(discountEndTime) }),
+      ...(image !== undefined && { image: typeof image === 'string' ? image : image[0] }),
+      ...(categoryId !== undefined && { category: { connect: { id: categoryId } } }),
     },
   });
 }

@@ -7,6 +7,12 @@ CREATE TYPE "AnswerStatus" AS ENUM ('WaitingAnswer', 'CompletedAnswer');
 -- CreateEnum
 CREATE TYPE "PaymentStatus" AS ENUM ('WaitingPayment', 'CompletedPayment', 'CancelledPayment');
 
+-- CreateEnum
+CREATE TYPE "GradeName" AS ENUM ('VIP', 'Black', 'Red', 'Orange', 'Green');
+
+-- CreateEnum
+CREATE TYPE "CategoryName" AS ENUM ('TOP', 'BOTTOM', 'DRESS', 'OUTER', 'SKIRT', 'SHOES', 'ACC');
+
 -- CreateTable
 CREATE TABLE "User" (
     "id" TEXT NOT NULL,
@@ -26,7 +32,7 @@ CREATE TABLE "User" (
 
 -- CreateTable
 CREATE TABLE "Grade" (
-    "name" TEXT NOT NULL,
+    "name" "GradeName" NOT NULL,
     "id" TEXT NOT NULL,
     "rate" INTEGER NOT NULL,
     "minAmount" INTEGER NOT NULL,
@@ -67,6 +73,7 @@ CREATE TABLE "Product" (
     "reviewsRating" INTEGER NOT NULL DEFAULT 0,
     "storeId" TEXT NOT NULL,
     "price" INTEGER NOT NULL DEFAULT 0,
+    "content" TEXT,
     "discountRate" INTEGER NOT NULL DEFAULT 0,
     "discountStartTime" TIMESTAMP(3),
     "discountEndTime" TIMESTAMP(3),
@@ -77,7 +84,7 @@ CREATE TABLE "Product" (
 
 -- CreateTable
 CREATE TABLE "Category" (
-    "name" TEXT NOT NULL,
+    "name" "CategoryName" NOT NULL,
     "id" TEXT NOT NULL,
 
     CONSTRAINT "Category_pkey" PRIMARY KEY ("id")
@@ -87,7 +94,7 @@ CREATE TABLE "Category" (
 CREATE TABLE "Stock" (
     "id" TEXT NOT NULL,
     "productId" TEXT NOT NULL,
-    "sizeId" INTEGER NOT NULL,
+    "sizeId" TEXT NOT NULL,
     "quantity" INTEGER NOT NULL DEFAULT 0,
 
     CONSTRAINT "Stock_pkey" PRIMARY KEY ("id")
@@ -97,7 +104,7 @@ CREATE TABLE "Stock" (
 CREATE TABLE "Size" (
     "size" JSONB NOT NULL,
     "name" TEXT NOT NULL,
-    "id" SERIAL NOT NULL,
+    "id" TEXT NOT NULL,
 
     CONSTRAINT "Size_pkey" PRIMARY KEY ("id")
 );
@@ -158,7 +165,7 @@ CREATE TABLE "CartItem" (
     "id" TEXT NOT NULL,
     "cartId" TEXT NOT NULL,
     "productId" TEXT NOT NULL,
-    "sizeId" INTEGER NOT NULL,
+    "sizeId" TEXT NOT NULL,
     "quantity" INTEGER NOT NULL DEFAULT 1,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
@@ -188,7 +195,7 @@ CREATE TABLE "OrderItem" (
     "price" INTEGER NOT NULL,
     "quantity" INTEGER NOT NULL DEFAULT 1,
     "productId" TEXT NOT NULL,
-    "sizeId" INTEGER NOT NULL,
+    "sizeId" TEXT NOT NULL,
     "orderId" TEXT NOT NULL,
     "isReviewed" BOOLEAN NOT NULL DEFAULT false,
 
@@ -237,7 +244,7 @@ CREATE TABLE "DailyStoreSales" (
     "id" TEXT NOT NULL,
     "storeId" TEXT NOT NULL,
     "date" TIMESTAMP(3) NOT NULL,
-    "totalSales" INTEGER NOT NULL,
+    "totalSales" BIGINT NOT NULL,
     "totalOrders" INTEGER NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
@@ -250,7 +257,7 @@ CREATE TABLE "WeeklyStoreSales" (
     "storeId" TEXT NOT NULL,
     "week" INTEGER NOT NULL,
     "year" INTEGER NOT NULL,
-    "totalSales" INTEGER NOT NULL,
+    "totalSales" BIGINT NOT NULL,
     "totalOrders" INTEGER NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
@@ -263,7 +270,7 @@ CREATE TABLE "MonthlyStoreSales" (
     "storeId" TEXT NOT NULL,
     "month" INTEGER NOT NULL,
     "year" INTEGER NOT NULL,
-    "totalSales" INTEGER NOT NULL,
+    "totalSales" BIGINT NOT NULL,
     "totalOrders" INTEGER NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
@@ -271,19 +278,22 @@ CREATE TABLE "MonthlyStoreSales" (
 );
 
 -- CreateTable
-CREATE TABLE "yearlyStoreSales" (
+CREATE TABLE "YearlyStoreSales" (
     "id" TEXT NOT NULL,
     "storeId" TEXT NOT NULL,
     "year" INTEGER NOT NULL,
-    "totalSales" INTEGER NOT NULL,
+    "totalSales" BIGINT NOT NULL,
     "totalOrders" INTEGER NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
-    CONSTRAINT "yearlyStoreSales_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "YearlyStoreSales_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateIndex
 CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Store_name_key" ON "Store"("name");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Store_userId_key" ON "Store"("userId");
@@ -301,10 +311,7 @@ CREATE UNIQUE INDEX "Review_orderItemId_key" ON "Review"("orderItemId");
 CREATE UNIQUE INDEX "Cart_buyerId_key" ON "Cart"("buyerId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Cart_id_buyerId_key" ON "Cart"("id", "buyerId");
-
--- CreateIndex
-CREATE UNIQUE INDEX "CartItem_cartId_productId_key" ON "CartItem"("cartId", "productId");
+CREATE UNIQUE INDEX "CartItem_cartId_productId_sizeId_key" ON "CartItem"("cartId", "productId", "sizeId");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Payment_orderId_key" ON "Payment"("orderId");
@@ -319,7 +326,7 @@ CREATE UNIQUE INDEX "WeeklyStoreSales_storeId_year_week_key" ON "WeeklyStoreSale
 CREATE UNIQUE INDEX "MonthlyStoreSales_storeId_year_month_key" ON "MonthlyStoreSales"("storeId", "year", "month");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "yearlyStoreSales_storeId_year_key" ON "yearlyStoreSales"("storeId", "year");
+CREATE UNIQUE INDEX "YearlyStoreSales_storeId_year_key" ON "YearlyStoreSales"("storeId", "year");
 
 -- AddForeignKey
 ALTER TABLE "User" ADD CONSTRAINT "User_gradeId_fkey" FOREIGN KEY ("gradeId") REFERENCES "Grade"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -355,7 +362,7 @@ ALTER TABLE "Inquiry" ADD CONSTRAINT "Inquiry_productId_fkey" FOREIGN KEY ("prod
 ALTER TABLE "Reply" ADD CONSTRAINT "Reply_inquiryId_fkey" FOREIGN KEY ("inquiryId") REFERENCES "Inquiry"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Reply" ADD CONSTRAINT "Reply_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "Reply" ADD CONSTRAINT "Reply_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Review" ADD CONSTRAINT "Review_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -415,4 +422,4 @@ ALTER TABLE "WeeklyStoreSales" ADD CONSTRAINT "WeeklyStoreSales_storeId_fkey" FO
 ALTER TABLE "MonthlyStoreSales" ADD CONSTRAINT "MonthlyStoreSales_storeId_fkey" FOREIGN KEY ("storeId") REFERENCES "Store"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "yearlyStoreSales" ADD CONSTRAINT "yearlyStoreSales_storeId_fkey" FOREIGN KEY ("storeId") REFERENCES "Store"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "YearlyStoreSales" ADD CONSTRAINT "YearlyStoreSales_storeId_fkey" FOREIGN KEY ("storeId") REFERENCES "Store"("id") ON DELETE CASCADE ON UPDATE CASCADE;
