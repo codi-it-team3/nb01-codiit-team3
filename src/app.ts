@@ -8,6 +8,8 @@ import { PORT } from './lib/constants';
 import authRouter from './routers/authrouter';
 import userrouter from './routers/userrouter';
 import multer from 'multer';
+import cartRouter from './routers/cartRouter';
+import orderRouter from './routers/orderRouter';
 
 const app = express();
 
@@ -19,6 +21,9 @@ const upload = multer();
 
 app.use('/api/auth', authRouter);
 app.use('/api/users', userrouter);
+
+app.use('/cart', cartRouter);
+app.use('/order', orderRouter);
 
 app.use(defaultNotFoundHandler);
 app.use(globalErrorHandler);
