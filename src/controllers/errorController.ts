@@ -2,9 +2,10 @@ import { Request, Response, NextFunction } from 'express';
 import { StructError } from 'superstruct';
 import BadRequestError from '../lib/errors/BadRequestError';
 import NotFoundError from '../lib/errors/NotFoundError';
+import ProductNotFoundError from '../lib/errors/ProductNotFoundError';
 import UnauthorizedError from '../lib/errors/UnauthorizedError';
 import ForbiddenError from '../lib/errors/ForbiddenError';
-import ConflictError from '../lib/errors/ConflictError';  
+import ConflictError from '../lib/errors/ConflictError';
 
 export function defaultNotFoundHandler(req: Request, res: Response, next: NextFunction) {
   res.status(404).send({ message: 'Not found' });
@@ -31,7 +32,16 @@ export function globalErrorHandler(err: Error, req: Request, res: Response, next
   }
 
   /** Application errors */
- if (err instanceof NotFoundError) {
+  if (err instanceof NotFoundError) {
+    res.status(404).send({
+      message: err.message,
+      statusCode: 404,
+      error: 'Not Found',
+    });
+    return;
+  }
+
+  if (err instanceof ProductNotFoundError) {
     res.status(404).send({
       message: err.message,
       statusCode: 404,

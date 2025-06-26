@@ -1,7 +1,7 @@
 import type { Request, Response, NextFunction } from 'express';
 import * as productsService from '../services/productsService';
 import BadRequestError from '../lib/errors/BadRequestError';
-import NotFoundError from '../lib/errors/NotFoundError';
+import NotFoundError from '../lib/errors/ProductNotFoundError';
 import { CreateProductBodyStruct, UpdateProductBodyStruct } from '../structs/productsStruct';
 import { create } from 'superstruct';
 import { ProductQuery } from '../types/product';

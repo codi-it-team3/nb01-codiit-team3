@@ -1,7 +1,7 @@
 import { Prisma } from '@prisma/client';
 import { prismaClient } from '../lib/prismaClient';
 import { CreateProductInput, UpdateProductInput, ProductQuery } from '../types/product';
-import NotFoundError from '../lib/errors/NotFoundError';
+import NotFoundError from '../lib/errors/ProductNotFoundError';
 
 export async function createProduct(data: CreateProductInput) {
   const store = await prismaClient.store.findUnique({ where: { id: data.storeId } });
