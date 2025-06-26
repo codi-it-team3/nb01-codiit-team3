@@ -26,6 +26,7 @@ export function verifyRefreshToken(token: string) {
 
     return { userId: decoding.id };
   } catch (e) {
+    console.error('Refresh token verify 실패:', e);
     throw new UnauthorizedError('유효하지 않은 토큰입니다.');
   }
 }

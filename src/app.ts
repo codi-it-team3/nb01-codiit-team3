@@ -5,28 +5,29 @@ import cookieParser from 'cookie-parser';
 import { PUBLIC_PATH, STATIC_PATH } from './lib/constants';
 import { defaultNotFoundHandler, globalErrorHandler } from './controllers/errorController';
 import { PORT } from './lib/constants';
+import cartRouter from './routers/cartRouter';
+import orderRouter from './routers/orderRouter';
 import authRouter from './routers/authrouter';
 import userrouter from './routers/userrouter';
 import multer from 'multer';
-import cartRouter from './routers/cartRouter';
-import orderRouter from './routers/orderRouter';
 
 const app = express();
 
-app.use(cors());
+app.use(cors({origin: 'http://localhost:3000', credentials: true,}),);
 app.use(express.json());
 app.use(cookieParser());
 app.use(STATIC_PATH, express.static(path.resolve(process.cwd(), PUBLIC_PATH)));
+
 const upload = multer();
 
 app.use('/api/auth', authRouter);
 app.use('/api/users', userrouter);
-
 app.use('/cart', cartRouter);
 app.use('/order', orderRouter);
 
 app.use(defaultNotFoundHandler);
 app.use(globalErrorHandler);
+
 
 if (process.env.NODE_ENV !== 'test') {
   app.listen(PORT, () => {

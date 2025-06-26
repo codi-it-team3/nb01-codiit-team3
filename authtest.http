@@ -56,3 +56,9 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImNtY2EzZnRvY
   "password": "new1234"
 }
  
+### 토큰 재발급 요청
+POST http://localhost:3000/api/auth/refresh
+Content-Type: application/json
+Cookie: refresh-token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImNtY2NyZmQ2cjAwMDEzYTJpdmR4a3AzbzkiLCJpYXQiOjE3NTA5MDYxMjcsImV4cCI6MTc1MTE2NTMyN30.0_4a1-oJ6T2BdUtSmJ4w0-Mc42vj-jPknuUNa5090Fc
+
+{}

@@ -3,8 +3,11 @@ import { create } from 'superstruct';
 import { ACCESS_TOKEN_COOKIE_NAME, REFRESH_TOKEN_COOKIE_NAME, NODE_ENV } from '../lib/constants';
 import { LoginBodyStruct, RegisterBodyStruct } from '../structs/authStruct';
 import * as authService from '../services/authServices';
-import userResponseDTO from '../dto/userResponseDTO';
-import { UserType } from '@prisma/client';
+import userResponseDTO from '../dto/userResponseDTO'; 
+import { RequestHandler } from 'express';
+import { ParamsDictionary } from 'express-serve-static-core';
+import { ParsedQs } from 'qs';
+
 
 export async function login(req: Request, res: Response) {
   const data = create(req.body, LoginBodyStruct);
@@ -27,9 +30,12 @@ export async function logout(req: Request, res: Response) {
 }
 
 export async function refreshToken(req: Request, res: Response) {
+  console.log('🚀 controller 진입');
   const refreshToken = req.cookies[REFRESH_TOKEN_COOKIE_NAME];
+   console.log('📦 받은 refreshToken:', refreshToken);
   const { accessToken, refreshToken: newRefreshToken } =
     await authService.refreshToken(refreshToken);
+    console.log('✅ 재발급 완료:', accessToken);
   setTokenCookies(res, accessToken, newRefreshToken);
   res.status(200).json({ accessToken });
 }
@@ -52,15 +58,4 @@ function clearTokenCookies(res: Response) {
   res.clearCookie(ACCESS_TOKEN_COOKIE_NAME);
   res.clearCookie(REFRESH_TOKEN_COOKIE_NAME);
 }
-
-export function refresh(
-  refresh: any,
-): import('express-serve-static-core').RequestHandler<
-  import('express-serve-static-core').ParamsDictionary,
-  any,
-  any,
-  import('qs').ParsedQs,
-  Record<string, any>
-> {
-  throw new Error('Function not implemented.');
-}
+ 
