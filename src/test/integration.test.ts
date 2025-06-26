@@ -151,7 +151,6 @@ describe('Auth API 통합 테스트', () => {
       expect(res.body).toHaveProperty('grade');
     });
 
-
     
     test('PATCH /api/users/me | 이름, 비밀번호 수정 성공', async () => {
       const res = await request(app)
@@ -187,8 +186,8 @@ describe('Auth API 통합 테스트', () => {
   });
 
  
-  describe.skip('관심 스토어 및 탈퇴 테스트', () => {
-    test('GET /api/users/me/likes | 관심 스토어 조회 성공', async () => {
+  describe('관심 스토어 및 탈퇴 테스트', () => {
+    test.skip('GET /api/users/me/likes | 관심 스토어 조회 성공', async () => {
       const res = await request(app)
         .get('/api/users/me/likes')
         .set('Authorization', `Bearer ${accessToken}`);

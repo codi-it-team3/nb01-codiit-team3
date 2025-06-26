@@ -31,8 +31,12 @@ export function globalErrorHandler(err: Error, req: Request, res: Response, next
   }
 
   /** Application errors */
-  if (err instanceof NotFoundError) {
-    res.status(404).send({ message: err.message, statusCode: 404, error: 'Not Found' });
+ if (err instanceof NotFoundError) {
+    res.status(404).send({
+      message: err.message,
+      statusCode: 404,
+      error: 'Not Found',
+    });
     return;
   }
 
