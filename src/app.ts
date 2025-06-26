@@ -7,8 +7,8 @@ import { defaultNotFoundHandler, globalErrorHandler } from './controllers/errorC
 import { PORT } from './lib/constants';
 import cartRouter from './routers/cartRouter';
 import orderRouter from './routers/orderRouter';
-import authRouter from './routers/authrouter';
-import userrouter from './routers/userrouter';
+import authRouter from './routers/authRouter';
+import userrouter from './routers/userRouter';
 import multer from 'multer';
 
 const app = express();
