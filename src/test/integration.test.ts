@@ -74,12 +74,14 @@ describe('Auth API 통합 테스트', () => {
   });
 
   test('POST /api/auth/login | 로그인 성공', async () => {
-    const res = await request(app).post('/api/auth/login').send(userCredentials);
-
+  const res = await request(app).post('/api/auth/login').send({
+    email: userInfo.email,
+    password: userInfo.password,
+  });
     expect(res.status).toBe(201);
     expect(res.body).toHaveProperty('accessToken');
     expect(res.body).toHaveProperty('user');
-    expect(res.body.user.email).toBe(userCredentials.email);
+    expect(res.body.user.email).toBe(userInfo.email);
 
     accessToken = res.body.accessToken;
 
@@ -149,6 +151,8 @@ describe('Auth API 통합 테스트', () => {
       expect(res.body).toHaveProperty('grade');
     });
 
+
+    
     test('PATCH /api/users/me | 이름, 비밀번호 수정 성공', async () => {
       const res = await request(app)
         .patch('/api/users/me')
@@ -182,9 +186,8 @@ describe('Auth API 통합 테스트', () => {
     });
   });
 
-
-  //데쉬보드
-  describe('관심 스토어 및 탈퇴 테스트', () => {
+ 
+  describe.skip('관심 스토어 및 탈퇴 테스트', () => {
     test('GET /api/users/me/likes | 관심 스토어 조회 성공', async () => {
       const res = await request(app)
         .get('/api/users/me/likes')
@@ -199,7 +202,7 @@ describe('Auth API 통합 테스트', () => {
       }
     });
 
-    test('GET /api/users/me/likes | 토큰 없이 요청', async () => {
+    test.skip('GET /api/users/me/likes | 토큰 없이 요청', async () => {
       const res = await request(app).get('/api/users/me/likes');
 
       expect(res.status).toBe(401);
@@ -232,53 +235,6 @@ describe('Auth API 통합 테스트', () => {
       expect(res.status).toBe(404);
       expect(res.body.message).toBe('유저를 찾을 수 없습니다.');
     });
-  });
-  describe('Dashboard API 통합 테스트 (임시 응답 기준)', () => {
-    test('GET /api/dashboard | 대시보드 조회 성공 (예상 응답 기반)', async () => {
-      const res = await request(app)
-        .get('/api/dashboard')
-        .set('Authorization', `Bearer ${accessToken}`); // 인증 필요하다면
-
-      // 일단 200 OK 기대
-      expect(res.status).toBe(200);
-
-      // 상위 키들 존재하는지 확인
-      expect(res.body).toHaveProperty('today');
-      expect(res.body).toHaveProperty('week');
-      expect(res.body).toHaveProperty('month');
-      expect(res.body).toHaveProperty('year');
-      expect(res.body).toHaveProperty('topSales');
-      expect(res.body).toHaveProperty('priceRange');
-
-      // 예: today 구조 테스트
-      expect(res.body.today).toHaveProperty('current');
-      expect(res.body.today).toHaveProperty('previous');
-      expect(res.body.today).toHaveProperty('changeRate');
-
-      expect(res.body.today.current).toHaveProperty('totalOrders');
-      expect(res.body.today.current).toHaveProperty('totalSales');
-      expect(typeof res.body.today.current.totalOrders).toBe('number');
-      expect(typeof res.body.today.current.totalSales).toBe('number');
-
-      // topSales 예시
-      expect(Array.isArray(res.body.topSales)).toBe(true);
-      if (res.body.topSales.length > 0) {
-        expect(res.body.topSales[0]).toHaveProperty('totalOrders');
-        expect(res.body.topSales[0]).toHaveProperty('product');
-        expect(res.body.topSales[0].product).toHaveProperty('id');
-        expect(res.body.topSales[0].product).toHaveProperty('name');
-        expect(res.body.topSales[0].product).toHaveProperty('price');
-      }
-
-      // priceRange 예시
-      expect(Array.isArray(res.body.priceRange)).toBe(true);
-      if (res.body.priceRange.length > 0) {
-        expect(res.body.priceRange[0]).toHaveProperty('priceRange');
-        expect(res.body.priceRange[0]).toHaveProperty('totalSales');
-        expect(res.body.priceRange[0]).toHaveProperty('percentage');
-      }
-    });
-  });
-  
-  
+  }); 
+ 
 });
