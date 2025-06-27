@@ -73,6 +73,7 @@ CREATE TABLE "Product" (
     "reviewsRating" INTEGER NOT NULL DEFAULT 0,
     "storeId" TEXT NOT NULL,
     "price" INTEGER NOT NULL DEFAULT 0,
+    "content" TEXT,
     "discountRate" INTEGER NOT NULL DEFAULT 0,
     "discountStartTime" TIMESTAMP(3),
     "discountEndTime" TIMESTAMP(3),
