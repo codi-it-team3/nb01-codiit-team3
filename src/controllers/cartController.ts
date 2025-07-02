@@ -1,0 +1,71 @@
+import { Request, Response } from 'express';
+import {
+  createCartService,
+  getCartListService,
+  updateCartItemService,
+  getCartItemListService,
+  deleteCartItemService,
+} from '../services/cartService';
+import { mapToGetCartDTO, mapToGetCartItemDTO } from '../lib/utils/mapToResponseCart';
+import UnauthorizedError from '../lib/errors/UnauthorizedError';
+import { UpdateCartItemRequestDTO } from '../dto/cartDTO';
+import { UpdateCartItemStruct } from '../structs/cartStruct';
+import { validate } from 'superstruct';
+
+export const createCartController = async (req: Request, res: Response) => {
+  if (!req.user) throw new UnauthorizedError('인증되지 않은 유저입니다.');
+  const buyerId = req.user.id;
+  const cart = await createCartService(buyerId);
+  res.status(201).json(cart);
+};
+
+export const getCartListController = async (req: Request, res: Response) => {
+  if (!req.user) throw new UnauthorizedError('인증되지 않은 유저입니다.');
+
+  const userId = req.user.id;
+  const buyerId = req.user.id;
+
+  const cart = await getCartListService(buyerId, userId);
+  const response = mapToGetCartDTO(cart);
+
+  res.status(200).json(response);
+};
+
+export const updateCartItemController = async (req: Request, res: Response) => {
+  if (!req.user) throw new UnauthorizedError('인증되지 않은 유저입니다.');
+
+  const buyerId = req.user.id;
+  const [error] = validate(req.body, UpdateCartItemStruct);
+
+  if (error) {
+    return res.status(400).json({ message: '유효하지 않은 요청 형식입니다.', details: error });
+  }
+
+  const updateData: UpdateCartItemRequestDTO = req.body;
+  const updatedItem = await updateCartItemService(updateData, buyerId);
+  if (!updatedItem) {
+    return res
+      .status(404)
+      .json({ message: '장바구니 항목을 찾을 수 없거나 업데이트할 수 없습니다.' });
+  }
+  const response = mapToGetCartItemDTO(updatedItem);
+  res.status(200).json(response);
+};
+
+export const getCartItemListController = async (req: Request, res: Response) => {
+  if (!req.user) throw new UnauthorizedError('인증되지 않은 유저입니다.');
+  const cartItemId = req.params.id;
+  const buyerId = req.user.id;
+  const cartItem = await getCartItemListService(cartItemId, buyerId);
+  const response = mapToGetCartItemDTO(cartItem);
+  res.status(200).json(response);
+};
+
+export const deleteCartItemController = async (req: Request, res: Response) => {
+  if (!req.user) throw new UnauthorizedError('인증되지 않은 유저입니다.');
+  const buyerId = req.user.id;
+  const cartItemId = req.params.id;
+
+  await deleteCartItemService(cartItemId, buyerId);
+  res.status(204).send();
+};
