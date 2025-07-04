@@ -11,6 +11,7 @@ import UnauthorizedError from '../lib/errors/UnauthorizedError';
 import { UpdateCartItemRequestDTO } from '../dto/cartDTO';
 import { UpdateCartItemStruct } from '../structs/cartStruct';
 import { validate } from 'superstruct';
+import BadRequestError from '../lib/errors/BadRequestError';
 
 export const createCartController = async (req: Request, res: Response) => {
   if (!req.user) throw new UnauthorizedError('인증되지 않은 유저입니다.');
@@ -35,9 +36,7 @@ export const updateCartItemController = async (req: Request, res: Response) => {
 
   const [error] = validate(req.body, UpdateCartItemStruct);
 
-  if (error) {
-    return res.status(400).json({ message: '유효하지 않은 요청 형식입니다.', details: error });
-  }
+  if (error) throw new BadRequestError('유효하지 않은 요청입니다.')
 
   const updateData: UpdateCartItemRequestDTO = req.body;
   const updatedItem = await updateCartItemService(updateData);
