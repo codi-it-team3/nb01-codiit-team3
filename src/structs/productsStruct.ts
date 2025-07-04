@@ -9,6 +9,7 @@ import {
   partial,
   coerce,
 } from 'superstruct';
+import { PageParamsStruct } from './commonStructs';
 
 export const CreateProductBodyStruct = object({
   name: coerce(nonempty(string()), string(), (v) => v.trim()),
@@ -39,3 +40,11 @@ export const GetProductListParamsStruct = object({
   page: optional(coerce(min(integer(), 1), string(), Number)),
   limit: optional(coerce(min(integer(), 1), string(), Number)),
 });
+
+export const CreateReviewBodyStruct = object({
+  rating: min(integer(), 0),
+  content: nonempty(string()),
+  orderItemId: nonempty(string()),
+});
+
+export const GetReviewListParamsStruct = PageParamsStruct;
