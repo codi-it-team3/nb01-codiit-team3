@@ -1,4 +1,4 @@
-import { GradeName, CategoryName } from '@prisma/client';
+import { GradeName, CategoryName, UserType } from '@prisma/client';
 import { prismaClient } from '../prismaClient';
 import app from '../../app';
 import request from 'supertest';
@@ -11,18 +11,28 @@ export const gradeData = {
   minAmount: 100000,
 };
 
-export const userData = {
+export const buyerUserData = {
   id: 'userId',
   name: '테스트Buyer',
   email: 'test@example.com',
   password: 'password',
   image: null,
+  type: UserType.BUYER,
+};
+
+export const sellerUserData = {
+  id: 'userId2',
+  name: '테스트Seller',
+  email: 'test2@example.com',
+  password: 'password',
+  image: null,
+  type: UserType.SELLER,
 };
 
 export const storeData = {
   id: 'storeId',
   name: '너이키',
-  userId: userData.id,
+  userId: buyerUserData.id,
   address: '서울',
   phoneNumber: '123-1234',
   content: '스포츠 용품',
@@ -61,7 +71,7 @@ export const stockData = {
 
 export const cartData = {
   id: 'cartId',
-  buyerId: userData.id,
+  buyerId: buyerUserData.id,
 };
 
 export const cartItemData = {
@@ -73,30 +83,49 @@ export const cartItemData = {
 };
 
 export const seedTestData = async () => {
-  const hashedPassword = await bcrypt.hash(userData.password, 10);
+  const hashedBuyerPassword = await bcrypt.hash(buyerUserData.password, 10);
+  const hashedSellerPassword = await bcrypt.hash(sellerUserData.password, 10);
 
-  await prismaClient.grade.create({ data: gradeData });
-  await prismaClient.user.create({
-    data: { ...userData, password: hashedPassword },
-  });
-  await prismaClient.store.create({ data: storeData });
-  await prismaClient.category.create({ data: categoryData });
-  await prismaClient.product.create({ data: productData });
-  await prismaClient.size.create({ data: sizeData });
-  await prismaClient.stock.create({ data: stockData });
+  await prismaClient.$transaction([
+    prismaClient.grade.create({ data: gradeData }),
+    prismaClient.user.create({ data: { ...buyerUserData, password: hashedBuyerPassword } }),
+    prismaClient.user.create({ data: { ...sellerUserData, password: hashedSellerPassword } }),
+    prismaClient.store.create({ data: storeData }),
+    prismaClient.category.create({ data: categoryData }),
+    prismaClient.product.create({ data: productData }),
+    prismaClient.size.create({ data: sizeData }),
+    prismaClient.stock.create({ data: stockData }),
+  ]);
 };
 
 export const seedCartTestData = async () => {
-  await prismaClient.cart.create({ data: cartData });
-  await prismaClient.cartItem.create({ data: cartItemData });
+  await prismaClient.$transaction([
+    prismaClient.cart.create({ data: cartData }),
+    prismaClient.cartItem.create({ data: cartItemData }),
+  ]);
 };
 
-export const registerAndLogin = async () => {
+export const buyerUserLogin = async () => {
   const agent = request.agent(app);
 
   const res = await agent.post('/api/auth/login').send({
-    email: userData.email,
-    password: userData.password,
+    email: buyerUserData.email,
+    password: buyerUserData.password,
+  });
+
+  const token = res.body.accessToken;
+
+  agent.set('Authorization', `Bearer ${token}`);
+
+  return { agent };
+};
+
+export const sellerUserLogin = async () => {
+  const agent = request.agent(app);
+
+  const res = await agent.post('/api/auth/login').send({
+    email: sellerUserData.email,
+    password: sellerUserData.password,
   });
 
   const token = res.body.accessToken;
