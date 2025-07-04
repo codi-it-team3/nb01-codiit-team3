@@ -2,76 +2,71 @@ import {
   createCart,
   getCartList,
   updateCartItem,
-  getStocks,
+  getStock,
   getCartItemList,
   deleteCartItem,
   getCartByBuyerId,
-  getBuyerIdByCartId,
-  getBuyerIdByCartItemId,
+  getCartById,
+  getCartItemById,
+  getCartItem,
+  getProductById,
+  getSizeById,
 } from '../repositories/cartRepository';
 import BadRequestError from '../lib/errors/BadRequestError';
 import NotFoundError from '../lib/errors/ProductNotFoundError';
-import ForbiddenError from '../lib/errors/ForbiddenError';
 import { UpdateCartItemData } from '../types/cart';
 
 export const createCartService = async (buyerId: string) => {
-  if (!buyerId) throw new BadRequestError('buyerId가 존재하지 않습니다.');
   const existingCart = await getCartByBuyerId(buyerId);
   if (existingCart) return existingCart;
 
   return await createCart(buyerId);
 };
 
-export const getCartListService = async (buyerId: string, userId: string) => {
-  if (!buyerId) throw new BadRequestError('buyerId가 존재하지 않습니다.');
+export const getCartListService = async (buyerId: string) => {
   const cart = await getCartList(buyerId);
 
   if (!cart) throw new NotFoundError('장바구니', buyerId);
 
-  if (buyerId !== userId) {
-    throw new ForbiddenError('해당 장바구니 항목에 접근할 수 없습니다.');
-  }
-
   return cart;
 };
 
-export const updateCartItemService = async (data: UpdateCartItemData, userId: string) => {
+export const updateCartItemService = async (data: UpdateCartItemData) => {
   const { cartId, productId, sizeId, quantity } = data;
 
-  const stock = await getStocks(productId, sizeId);
+  const product = await getProductById(productId);
+  if (!product) throw new BadRequestError('존재하지 않는 상품입니다.');
 
+  const size = await getSizeById(sizeId);
+  if (!size) throw new BadRequestError('존재하지 않는 사이즈입니다.');
+
+  const stock = await getStock(productId, sizeId);
   if (!stock) throw new BadRequestError('재고 정보가 존재하지 않습니다.');
   if (quantity > stock.quantity)
     throw new BadRequestError('해당 상품의 남은 재고 수량이 부족합니다.');
 
-  const cart = await getBuyerIdByCartId(cartId);
-
+  const cart = await getCartById(cartId);
   if (!cart) throw new BadRequestError('장바구니가 존재하지 않습니다.');
-  if (cart.buyerId !== userId)
-    throw new ForbiddenError('이 장바구니 항목을 수정할 권한이 없습니다.');
+
+  const existingItem = await getCartItem(cartId, productId, sizeId);
+  if (existingItem && existingItem.quantity === quantity)
+    throw new BadRequestError('동일한 상품이 이미 장바구니에 존재합니다.');
+
   return await updateCartItem(data);
 };
 
-export const getCartItemListService = async (cartItemId: string, userId: string) => {
+export const getCartItemListService = async (cartItemId: string) => {
   const cartItem = await getCartItemList(cartItemId);
   if (!cartItem) throw new NotFoundError('장바구니 항목', cartItemId);
-
-  if (cartItem.cart.buyerId !== userId) {
-    throw new ForbiddenError('해당 장바구니 항목에 접근할 수 없습니다.');
-  }
 
   return cartItem;
 };
 
-export const deleteCartItemService = async (cartItemId: string, userId: string) => {
-  const cartItem = await getBuyerIdByCartItemId(cartItemId);
+export const deleteCartItemService = async (cartItemId: string) => {
+  const cartItem = await getCartItemById(cartItemId);
 
   if (!cartItem) {
     throw new NotFoundError('장바구니 항목', cartItemId);
-  }
-
-  if (cartItem.cart.buyerId !== userId) {
-    throw new ForbiddenError('이 장바구니 항목을 삭제할 권한이 없습니다.');
   }
 
   return await deleteCartItem(cartItemId);

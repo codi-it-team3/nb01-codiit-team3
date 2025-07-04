@@ -8,16 +8,18 @@ import {
 } from '../controllers/cartController';
 import authMiddleware from '../middlewares/authMiddleware';
 import asyncHandler from '../lib/asyncHandler';
+import { onlyBuyer } from '../middlewares/onlyMiddleware';
+
 const cartRouter = Router();
 
-cartRouter.post('/', authMiddleware, asyncHandler(createCartController));
+cartRouter.post('/', authMiddleware, onlyBuyer, asyncHandler(createCartController));
 
-cartRouter.get('/', authMiddleware, asyncHandler(getCartListController));
+cartRouter.get('/', authMiddleware, onlyBuyer, asyncHandler(getCartListController));
 
-cartRouter.patch('/', authMiddleware, asyncHandler(updateCartItemController));
+cartRouter.patch('/', authMiddleware, onlyBuyer, asyncHandler(updateCartItemController));
 
-cartRouter.get('/:id', authMiddleware, asyncHandler(getCartItemListController));
+cartRouter.get('/:id', authMiddleware, onlyBuyer, asyncHandler(getCartItemListController));
 
-cartRouter.delete('/:id', authMiddleware, asyncHandler(deleteCartItemController));
+cartRouter.delete('/:id', authMiddleware, onlyBuyer, asyncHandler(deleteCartItemController));
 
 export default cartRouter;

@@ -6,7 +6,7 @@ import {
   getCartItemListService,
   deleteCartItemService,
 } from '../services/cartService';
-import { mapToGetCartDTO, mapToGetCartItemDTO } from '../lib/utils/mapToResponseCart';
+import { serializeCart, serializeCartItem } from '../lib/utils/serializeCart';
 import UnauthorizedError from '../lib/errors/UnauthorizedError';
 import { UpdateCartItemRequestDTO } from '../dto/cartDTO';
 import { UpdateCartItemStruct } from '../structs/cartStruct';
@@ -22,11 +22,10 @@ export const createCartController = async (req: Request, res: Response) => {
 export const getCartListController = async (req: Request, res: Response) => {
   if (!req.user) throw new UnauthorizedError('인증되지 않은 유저입니다.');
 
-  const userId = req.user.id;
   const buyerId = req.user.id;
 
-  const cart = await getCartListService(buyerId, userId);
-  const response = mapToGetCartDTO(cart);
+  const cart = await getCartListService(buyerId);
+  const response = serializeCart(cart);
 
   res.status(200).json(response);
 };
@@ -34,7 +33,6 @@ export const getCartListController = async (req: Request, res: Response) => {
 export const updateCartItemController = async (req: Request, res: Response) => {
   if (!req.user) throw new UnauthorizedError('인증되지 않은 유저입니다.');
 
-  const buyerId = req.user.id;
   const [error] = validate(req.body, UpdateCartItemStruct);
 
   if (error) {
@@ -42,30 +40,28 @@ export const updateCartItemController = async (req: Request, res: Response) => {
   }
 
   const updateData: UpdateCartItemRequestDTO = req.body;
-  const updatedItem = await updateCartItemService(updateData, buyerId);
+  const updatedItem = await updateCartItemService(updateData);
   if (!updatedItem) {
     return res
       .status(404)
       .json({ message: '장바구니 항목을 찾을 수 없거나 업데이트할 수 없습니다.' });
   }
-  const response = mapToGetCartItemDTO(updatedItem);
+  const response = serializeCartItem(updatedItem);
   res.status(200).json(response);
 };
 
 export const getCartItemListController = async (req: Request, res: Response) => {
   if (!req.user) throw new UnauthorizedError('인증되지 않은 유저입니다.');
   const cartItemId = req.params.id;
-  const buyerId = req.user.id;
-  const cartItem = await getCartItemListService(cartItemId, buyerId);
-  const response = mapToGetCartItemDTO(cartItem);
+  const cartItem = await getCartItemListService(cartItemId);
+  const response = serializeCartItem(cartItem);
   res.status(200).json(response);
 };
 
 export const deleteCartItemController = async (req: Request, res: Response) => {
   if (!req.user) throw new UnauthorizedError('인증되지 않은 유저입니다.');
-  const buyerId = req.user.id;
   const cartItemId = req.params.id;
 
-  await deleteCartItemService(cartItemId, buyerId);
+  await deleteCartItemService(cartItemId);
   res.status(204).send();
 };
