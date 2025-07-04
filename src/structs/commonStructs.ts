@@ -4,7 +4,7 @@ import { coerce, integer, object, string, defaulted, optional, enums, nonempty }
 const integerString = coerce(integer(), string(), (value) => parseInt(value));
 
 export const IdParamsStruct = object({
-  id: integerString,
+  id: nonempty(string()),
 });
 
 export const PageParamsStruct = object({

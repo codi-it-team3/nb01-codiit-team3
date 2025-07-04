@@ -55,6 +55,7 @@ describe('리뷰 API 테스트', () => {
         data: {
           name: '가디건',
           image: 'https://s3-URL',
+          content: '가디건임',
           storeId: store.id,
           price: 20000,
           discountRate: 10,

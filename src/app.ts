@@ -11,6 +11,7 @@ import cartRouter from './routers/cartRouter';
 import orderRouter from './routers/orderRouter';
 import authRouter from './routers/authRouter';
 import userrouter from './routers/userRouter';
+import reviewsRouter from './routers/reviewsRouter';
 import multer from 'multer';
 
 const app = express();
@@ -23,6 +24,7 @@ app.use(STATIC_PATH, express.static(path.resolve(process.cwd(), PUBLIC_PATH)));
 const upload = multer();
 
 app.use('/api/products', productsRouter);
+app.use('/api/review', reviewsRouter);
 app.use('/api/auth', authRouter);
 app.use('/api/users', userrouter);
 app.use('/cart', cartRouter);
