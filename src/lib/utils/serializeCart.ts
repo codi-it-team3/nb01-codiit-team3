@@ -5,7 +5,7 @@ import {
   StocksResponseDTO,
 } from '../../dto/cartDTO';
 
-export function mapToGetCartDTO(cart: CartResponseDTO) {
+export function serializeCart(cart: CartResponseDTO) {
   return {
     id: cart.id,
     buyerId: cart.buyerId,
@@ -65,7 +65,7 @@ export function mapToGetCartDTO(cart: CartResponseDTO) {
   };
 }
 
-export function mapToGetCartItemDTO(cartItem: CartItemWithCartResponseDTO) {
+export function serializeCartItem(cartItem: CartItemWithCartResponseDTO) {
   return {
     id: cartItem.id,
     cartId: cartItem.cartId,
