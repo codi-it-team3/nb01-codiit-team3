@@ -7,7 +7,6 @@ import {
   deleteCartItemService,
 } from '../services/cartService';
 import { serializeCart, serializeCartItem } from '../lib/utils/serializeCart';
-import UnauthorizedError from '../lib/errors/UnauthorizedError';
 import { UpdateCartItemRequestDTO } from '../dto/cartDTO';
 import { UpdateCartItemStruct } from '../structs/cartStruct';
 import { validate } from 'superstruct';
