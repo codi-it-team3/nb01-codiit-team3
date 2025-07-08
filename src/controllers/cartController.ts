@@ -14,16 +14,14 @@ import { validate } from 'superstruct';
 import BadRequestError from '../lib/errors/BadRequestError';
 
 export const createCartController = async (req: Request, res: Response) => {
-  if (!req.user) throw new UnauthorizedError('인증되지 않은 유저입니다.');
-  const buyerId = req.user.id;
+  const buyerId = req.user!.id;
   const cart = await createCartService(buyerId);
   res.status(201).json(cart);
 };
 
 export const getCartListController = async (req: Request, res: Response) => {
-  if (!req.user) throw new UnauthorizedError('인증되지 않은 유저입니다.');
 
-  const buyerId = req.user.id;
+  const buyerId = req.user!.id;
 
   const cart = await getCartListService(buyerId);
   const response = serializeCart(cart);
@@ -32,7 +30,6 @@ export const getCartListController = async (req: Request, res: Response) => {
 };
 
 export const updateCartItemController = async (req: Request, res: Response) => {
-  if (!req.user) throw new UnauthorizedError('인증되지 않은 유저입니다.');
 
   const [error] = validate(req.body, UpdateCartItemStruct);
 
@@ -50,7 +47,6 @@ export const updateCartItemController = async (req: Request, res: Response) => {
 };
 
 export const getCartItemListController = async (req: Request, res: Response) => {
-  if (!req.user) throw new UnauthorizedError('인증되지 않은 유저입니다.');
   const cartItemId = req.params.id;
   const cartItem = await getCartItemListService(cartItemId);
   const response = serializeCartItem(cartItem);
@@ -58,7 +54,6 @@ export const getCartItemListController = async (req: Request, res: Response) => 
 };
 
 export const deleteCartItemController = async (req: Request, res: Response) => {
-  if (!req.user) throw new UnauthorizedError('인증되지 않은 유저입니다.');
   const cartItemId = req.params.id;
 
   await deleteCartItemService(cartItemId);
