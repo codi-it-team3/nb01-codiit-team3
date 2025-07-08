@@ -105,6 +105,7 @@ model Stock {
   size      Size    @relation(fields: [sizeId], references: [id])
   sizeId    String
   quantity  Int     @default(0)
+  @@unique([productId, sizeId])
 }
 
 model Size {

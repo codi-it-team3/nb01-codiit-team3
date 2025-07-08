@@ -20,7 +20,7 @@ export async function login(data: Pick<User, 'email' | 'password'>) {
     throw new UnauthorizedError('이메일 또는 비밀번호가 올바르지 않습니다.');
   }
 
-  const { accessToken, refreshToken } = generateToken(user.id);
+  const { accessToken, refreshToken } = generateToken(user.id, user.type);
   await usersRepository.updateUser(user.id, { refreshToken });
 
   return {
@@ -44,7 +44,7 @@ export async function refreshToken(
     throw new UnauthorizedError('User not found');
   }
 
-  const { accessToken, refreshToken: newRefreshToken } = generateToken(user.id);
+  const { accessToken, refreshToken: newRefreshToken } = generateToken(user.id, user.type);
 
   return { accessToken, refreshToken: newRefreshToken };
 }
