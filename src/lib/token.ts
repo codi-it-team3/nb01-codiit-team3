@@ -1,10 +1,11 @@
 import jwt from 'jsonwebtoken';
 import { JWT_ACCESS_TOKEN_SECRET, JWT_REFRESH_TOKEN_SECRET } from './constants';
 import UnauthorizedError from './errors/UnauthorizedError';
+import { UserType } from '@prisma/client';
 
-export function generateToken(userId: string) {
-  const accessToken = jwt.sign({ id: userId }, JWT_ACCESS_TOKEN_SECRET, { expiresIn: '1h' });
-  const refreshToken = jwt.sign({ id: userId }, JWT_REFRESH_TOKEN_SECRET, { expiresIn: '3d' });
+export function generateToken(userId: string, type: UserType) {
+  const accessToken = jwt.sign({ id: userId, type }, JWT_ACCESS_TOKEN_SECRET, { expiresIn: '1h' });
+  const refreshToken = jwt.sign({ id: userId, type }, JWT_REFRESH_TOKEN_SECRET, { expiresIn: '3d' });
   return { accessToken, refreshToken };
 }
 
@@ -13,7 +14,7 @@ export function verifyAccessToken(token: string) {
   if (typeof decodeing === 'string') {
     throw new Error('Invalid token');
   }
-  return { id: decodeing.id };
+  return { id: decodeing.id, type: decodeing.type };
 }
 
 export function verifyRefreshToken(token: string) {

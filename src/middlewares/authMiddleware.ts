@@ -7,7 +7,8 @@ export default function authMiddleware(req: Request, res: Response, next: NextFu
   if (!token) throw new UnauthorizedError('인증이 필요합니다.');
 
   const payload = verifyAccessToken(token);
-  req.user = { id: payload.id };
+
+  req.user = { id: payload.id, type: payload.type };
   next();
 }
 

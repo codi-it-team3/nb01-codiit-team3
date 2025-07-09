@@ -143,28 +143,28 @@ describe('주문 API 테스트', () => {
     await prismaClient.$disconnect();
   });
 
-  describe('POST /order', () => {
+  describe('POST /api/order', () => {
     test.skip('필수 값이 누락되면 400을 반환한다', async () => {
-      const response = await request(app).post('/order').send({});
+      const response = await request(app).post('/api/order').send({});
       expect(response.status).toBe(400);
     });
 
     test.skip('인증되지 않은 유저는 401을 반환한다', async () => {
-      const response = await request(app).post('/order').set('Authorization', '').send(orderData);
+      const response = await request(app).post('/api/order').set('Authorization', '').send(orderData);
       expect(response.status).toBe(401);
     });
 
     test.skip('접근 권한이 없는 유저는 403을 반환한다', async () => {
       const otherUserToken = 'dummy.other.token';
       const response = await request(app)
-        .post('/order')
+        .post('/api/order')
         .set('Authorization', `Bearer ${otherUserToken}`)
         .send(cartData);
       expect(response.status).toBe(403);
     });
 
     test('사용자가 장바구니에 담은 상품으로 주문을 생성하면 201을 반환한다', async () => {
-      const response = await request(app).post('/order').send(orderData);
+      const response = await request(app).post('/api/order').send(orderData);
 
       expect(response.status).toBe(201);
       expect(response.body).toMatchObject({
@@ -187,16 +187,16 @@ describe('주문 API 테스트', () => {
       });
     });
 
-    describe('GET /order', () => {
+    describe('GET /api/order', () => {
       test.skip('인증되지 않은 유저는 401을 반환한다', async () => {
-        const response = await request(app).get('/order').set('Authorization', '');
+        const response = await request(app).get('/api/order').set('Authorization', '');
         expect(response.status).toBe(401);
       });
 
       test.skip('접근 권한이 없는 유저는 403을 반환한다', async () => {
         const otherUserToken = 'dummy.other.token';
         const response = await request(app)
-          .get('/order')
+          .get('/api/order')
           .set('Authorization', `Bearer ${otherUserToken}`);
         expect(response.status).toBe(403);
       });
@@ -214,7 +214,7 @@ describe('주문 API 테스트', () => {
           data: paymentData,
         });
 
-        const response = await request(app).get('/order');
+        const response = await request(app).get('/api/order');
 
         expect(response.status).toBe(200);
 
@@ -238,16 +238,16 @@ describe('주문 API 테스트', () => {
         });
       });
     });
-    describe('GET /order:id', () => {
+    describe('GET /api/order:id', () => {
       test.skip('인증되지 않은 유저는 401을 반환한다', async () => {
-        const response = await request(app).get('/order/Id').set('Authorization', '');
+        const response = await request(app).get('/api/order/Id').set('Authorization', '');
         expect(response.status).toBe(401);
       });
 
       test.skip('접근 권한이 없는 유저는 403을 반환한다', async () => {
         const otherUserToken = 'dummy.other.token';
         const response = await request(app)
-          .get('/order/Id')
+          .get('/api/order/Id')
           .set('Authorization', `Bearer ${otherUserToken}`);
         expect(response.status).toBe(403);
       });
@@ -257,7 +257,7 @@ describe('주문 API 테스트', () => {
           data: orderData,
         });
 
-        const response = await request(app).get(`/order/errorId`);
+        const response = await request(app).get(`/api/order/errorId`);
 
         expect(response.status).toBe(404);
         expect(response.body.error).toBe(`Order not found`);
@@ -275,7 +275,7 @@ describe('주문 API 테스트', () => {
           data: paymentData,
         });
 
-        const response = await request(app).get(`/order/${orderData.id}`);
+        const response = await request(app).get(`/api/order/${orderData.id}`);
 
         expect(response.status).toBe(200);
         expect(response.body).toMatchObject({
@@ -300,15 +300,15 @@ describe('주문 API 테스트', () => {
       });
     });
 
-    describe('PATCH /order/:id', () => {
+    describe('PATCH /api/order/:id', () => {
       test.skip('필수 값이 누락되면 400을 반환한다', async () => {
-        const response = await request(app).patch('/order/Id').send({});
+        const response = await request(app).patch('/api/order/Id').send({});
         expect(response.status).toBe(400);
       });
 
       test.skip('인증되지 않은 유저는 401을 반환한다', async () => {
         const response = await request(app)
-          .patch('/order/Id')
+          .patch('/api/order/Id')
           .set('Authorization', '')
           .send(orderData);
         expect(response.status).toBe(401);
@@ -317,7 +317,7 @@ describe('주문 API 테스트', () => {
       test.skip('접근 권한이 없는 유저는 403을 반환한다', async () => {
         const otherUserToken = 'dummy.other.token';
         const response = await request(app)
-          .patch('/order/Id')
+          .patch('/api/order/Id')
           .set('Authorization', `Bearer ${otherUserToken}`)
           .send(cartData);
         expect(response.status).toBe(403);
@@ -342,7 +342,7 @@ describe('주문 API 테스트', () => {
           address: '서울',
           usePoint: 500,
         };
-        const response = await request(app).patch(`/order/errorId`).send(updateData);
+        const response = await request(app).patch(`/api/order/errorId`).send(updateData);
 
         expect(response.status).toBe(404);
         expect(response.body.error).toBe(`Order not found`);
@@ -367,7 +367,7 @@ describe('주문 API 테스트', () => {
           usePoint: 500,
         };
 
-        const response = await request(app).patch(`/order/${orderData.id}`).send(updateData);
+        const response = await request(app).patch(`/api/order/${orderData.id}`).send(updateData);
 
         expect(response.status).toBe(200);
 
@@ -392,16 +392,16 @@ describe('주문 API 테스트', () => {
         });
       });
     });
-    describe('DELETE /order/:id', () => {
+    describe('DELETE /api/order/:id', () => {
       test.skip('인증되지 않은 유저는 401을 반환한다', async () => {
-        const response = await request(app).delete('/order/Id').set('Authorization', '');
+        const response = await request(app).delete('/api/order/Id').set('Authorization', '');
         expect(response.status).toBe(401);
       });
 
       test.skip('접근 권한이 없는 유저는 403을 반환한다', async () => {
         const otherUserToken = 'dummy.other.token';
         const response = await request(app)
-          .delete('/order/Id')
+          .delete('/api/order/Id')
           .set('Authorization', `Bearer ${otherUserToken}`);
         expect(response.status).toBe(403);
       });
@@ -411,7 +411,7 @@ describe('주문 API 테스트', () => {
           data: orderData,
         });
 
-        const response = await request(app).delete(`/order/errorId`);
+        const response = await request(app).delete(`/api/order/errorId`);
 
         expect(response.status).toBe(404);
         expect(response.body.error).toBe(`Order not found`);
@@ -436,11 +436,11 @@ describe('주문 API 테스트', () => {
           data: paymentData2,
         });
 
-        const response = await request(app).delete(`/order/${orderData.id}`);
+        const response = await request(app).delete(`/api/order/${orderData.id}`);
 
         expect(response.status).toBe(204);
 
-        const response2 = await request(app).get(`/order/${orderData.id}`);
+        const response2 = await request(app).get(`/api/order/${orderData.id}`);
 
         expect(response2.status).toBe(404);
       });

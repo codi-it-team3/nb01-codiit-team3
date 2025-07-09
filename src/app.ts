@@ -27,8 +27,8 @@ app.use('/api/products', productsRouter);
 app.use('/api/review', reviewsRouter);
 app.use('/api/auth', authRouter);
 app.use('/api/users', userrouter);
-app.use('/cart', cartRouter);
-app.use('/order', orderRouter);
+app.use('/api/cart', cartRouter);
+app.use('/api/order', orderRouter);
 
 app.use(defaultNotFoundHandler);
 app.use(globalErrorHandler);
