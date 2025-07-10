@@ -17,9 +17,10 @@ describe('리뷰 API 테스트', () => {
     beforeEach(async () => {
       const grade = await prismaClient.grade.create({
         data: {
+          id: 'grade_green',
           name: GradeName.Green,
-          rate: 5,
-          minAmount: 1000000,
+          rate: 0,
+          minAmount: 0,
         },
       });
 
@@ -80,30 +81,27 @@ describe('리뷰 API 테스트', () => {
     });
 
     test('인증되지 않은 사용자가 리뷰를 작성할 때 401을 반환해야 한다', async () => {
-      const response = await request(app).post('/api/product/{productId}/reviews');
+      const response = await request(app).post('/api/products/:productId/reviews');
       expect(response.status).toBe(401);
     });
 
     test('인증된 사용자가 리뷰를 생성할 때 201을 반환해야 한다', async () => {
       const agent = request.agent(app);
 
-      const grade = await prismaClient.grade.findFirstOrThrow({
-        where: { name: GradeName.Green },
-      });
-
       const userResponse = await agent.post('/api/users').send({
         name: '이유저',
         email: 'user02@example.com',
         password: 'password456',
-        image: 'image File',
         type: UserType.BUYER,
-        gradeId: grade.id,
+        image: 'image file',
       });
 
-      await agent.post('/api/auth/login').send({
+      const user = await agent.post('/api/auth/login').send({
         email: 'user02@example.com',
         password: 'password456',
       });
+
+      const token = user.body.accessToken;
 
       const order = await prismaClient.order.create({
         data: {
@@ -136,11 +134,13 @@ describe('리뷰 API 테스트', () => {
         content: '좋은 제품이에요!',
         rating: 5,
         orderItemId: orderItem.id,
-        userId: userResponse.body.id,
-        productId: product.id,
       };
 
-      const response = await agent.post('/api/product/{productId}/reviews').send(reviewPayload);
+      const response = await agent
+        .post(`/api/products/${product.id}/reviews`)
+        .set('Authorization', `Bearer ${token}`)
+        .send(reviewPayload);
+
       expect(response.status).toBe(201);
     });
   });
