@@ -4,14 +4,12 @@ import { coerce, integer, object, string, defaulted, optional, enums, nonempty }
 const integerString = coerce(integer(), string(), (value) => parseInt(value));
 
 export const IdParamsStruct = object({
-  id: integerString,
+  id: nonempty(string()),
 });
 
 export const PageParamsStruct = object({
   page: defaulted(integerString, 1),
-  pageSize: defaulted(integerString, 10),
-  orderBy: optional(enums(['recent'])),
-  keyword: optional(nonempty(string())),
+  limit: defaulted(integerString, 10),
 });
 
 export const CursorParamsStruct = object({
