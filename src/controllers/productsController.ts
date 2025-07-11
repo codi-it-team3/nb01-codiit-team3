@@ -1,9 +1,11 @@
 import type { Request, Response, NextFunction } from 'express';
 import * as productsService from '../services/productsService';
 import * as reviewsService from '../services/reviewsSerivce';
+import * as inquiriesSerivce from '../services/inquiriesService';
 import BadRequestError from '../lib/errors/BadRequestError';
 import NotFoundError from '../lib/errors/ProductNotFoundError';
 import {
+  CreateInquiryBodyStruct,
   CreateProductBodyStruct,
   UpdateProductBodyStruct,
   CreateReviewBodyStruct,
@@ -68,6 +70,21 @@ export async function deleteProduct(req: Request, res: Response, next: NextFunct
   }
 }
 
+export async function createInquiry(req: Request, res: Response) {
+  if (!req.user) {
+    throw new UnauthorizedError('인증되지 않은 유저입니다.');
+  }
+
+  const { id: productId } = create({ id: req.params.productId }, IdParamsStruct);
+  const data = create(req.body, CreateInquiryBodyStruct);
+  const createdInquiry = await inquiriesSerivce.createInquiry({
+    ...data,
+    userId: req.user.id,
+    productId,
+  });
+  res.status(201).send(createdInquiry);
+}
+
 export async function createReview(req: Request, res: Response) {
   if (!req.user) {
     throw new UnauthorizedError('인증되지 않은 유저입니다.');
@@ -80,6 +97,12 @@ export async function createReview(req: Request, res: Response) {
     ...data,
   });
   res.status(201).send(reviewResponseDTO(createdReview));
+}
+
+export async function getInquiryList(req: Request, res: Response) {
+  const { id: productId } = create({ id: req.params.productId }, IdParamsStruct);
+  const inquiries = await inquiriesSerivce.getInquiryList(productId);
+  res.send(inquiries);
 }
 
 export async function getReviewList(req: Request, res: Response) {

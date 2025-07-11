@@ -8,6 +8,7 @@ import {
   optional,
   partial,
   coerce,
+  boolean,
 } from 'superstruct';
 import { PageParamsStruct } from './commonStructs';
 
@@ -39,6 +40,12 @@ export const GetProductListParamsStruct = object({
   sort: optional(string()),
   page: optional(coerce(min(integer(), 1), string(), Number)),
   limit: optional(coerce(min(integer(), 1), string(), Number)),
+});
+
+export const CreateInquiryBodyStruct = object({
+  title: nonempty(string()),
+  content: nonempty(string()),
+  isSecret: boolean(),
 });
 
 export const CreateReviewBodyStruct = object({
