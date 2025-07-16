@@ -41,7 +41,7 @@ export type CartItemWithCart = Prisma.CartItemGetPayload<{
   }
 }>
 
-export interface UpdateCartItemData {
+export type UpdateCartItemData = {
   cartId: string;
   productId: string;
   sizeId: string;

@@ -32,7 +32,7 @@ export const sellerUserData = {
 export const storeData = {
   id: 'storeId',
   name: '너이키',
-  userId: buyerUserData.id,
+  userId: sellerUserData.id,
   address: '서울',
   phoneNumber: '123-1234',
   content: '스포츠 용품',

@@ -21,7 +21,7 @@ export interface CartItemResponseDTO {
   quantity: number;
   createdAt: Date;
   updatedAt: Date;
-  product: ProductResponseDTO;
+  product: CartProductResponseDTO;
 }
 
 export interface CartItemWithCartResponseDTO {
@@ -32,11 +32,11 @@ export interface CartItemWithCartResponseDTO {
   quantity: number;
   createdAt: Date;
   updatedAt: Date;
-  product: ProductResponseDTO;
+  product: CartProductResponseDTO;
   cart: CartItemWithCartDTO;
 }
 
-export interface ProductResponseDTO {
+export interface CartProductResponseDTO {
   id: string;
   storeId: string;
   name: string;
@@ -47,11 +47,11 @@ export interface ProductResponseDTO {
   discountEndTime: Date | null;
   createdAt: Date;
   updatedAt: Date;
-  store: StoreResponseDTO;
-  stocks: StocksResponseDTO[];
+  store: CartStoreResponseDTO;
+  stocks: CartStocksResponseDTO[];
 }
 
-export interface StoreResponseDTO {
+export interface CartStoreResponseDTO {
   id: string;
   userId: string;
   name: string;
@@ -63,15 +63,15 @@ export interface StoreResponseDTO {
   updatedAt: Date;
 }
 
-export interface StocksResponseDTO {
+export interface CartStocksResponseDTO {
   id: string;
   productId: string;
   sizeId: string;
   quantity: number;
-  size: SizeResponseDTO;
+  size: CartSizeResponseDTO;
 }
 
-export interface SizeResponseDTO {
+export interface CartSizeResponseDTO {
   id: string;
   size: string | number | boolean | { en?: string; ko?: string } | null | Array<any>;
 }
