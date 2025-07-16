@@ -12,6 +12,7 @@ import orderRouter from './routers/orderRouter';
 import authRouter from './routers/authRouter';
 import userrouter from './routers/userRouter';
 import reviewsRouter from './routers/reviewsRouter';
+import inquiriesRouter from './routers/inquiriesRouter';
 import multer from 'multer';
 
 const app = express();
@@ -25,6 +26,7 @@ const upload = multer();
 
 app.use('/api/products', productsRouter);
 app.use('/api/review', reviewsRouter);
+app.use('/api/inquiries', inquiriesRouter);
 app.use('/api/auth', authRouter);
 app.use('/api/users', userrouter);
 app.use('/api/cart', cartRouter);

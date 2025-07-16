@@ -106,3 +106,10 @@ export async function deleteProduct(productId: string) {
     where: { id: productId },
   });
 }
+
+export async function getProductById(id: string) {
+  const product = await prismaClient.product.findUnique({
+    where: { id },
+  });
+  return product;
+}

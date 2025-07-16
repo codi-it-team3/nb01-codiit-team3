@@ -12,6 +12,11 @@ export const PageParamsStruct = object({
   limit: defaulted(integerString, 10),
 });
 
+export const PageSizeParamsStruct = object({
+  page: defaulted(integer(), 1),
+  pageSize: defaulted(integer(), 10),
+});
+
 export const CursorParamsStruct = object({
   cursor: defaulted(integerString, 0),
   limit: defaulted(integerString, 10),
