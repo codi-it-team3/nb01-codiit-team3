@@ -2,141 +2,13 @@ import request from 'supertest';
 import app from '../app';
 import { clearDatabase } from '../lib/testUtils';
 import { prismaClient } from '../lib/prismaClient';
-import { GradeName, CategoryName, PaymentStatus } from '@prisma/client';
-
-const gradeData = {
-  id: 'grade_green',
-  name: GradeName.Green,
-  rate: 5,
-  minAmount: 100000,
-};
-
-const userData = {
-  id: 'userId',
-  name: '테스트 buyer',
-  email: 'buyer@test.com',
-  password: 'hashedPassword',
-  points: 1000,
-};
-
-const storeData = {
-  id: 'storeId',
-  name: '너이키',
-  userId: userData.id,
-  address: '서울',
-  phoneNumber: '123-1234',
-  content: '스포츠 용품',
-  image: 'imageURL',
-};
-
-const categoryData = {
-  id: 'categoryId',
-  name: CategoryName.BOTTOM,
-};
-
-const productData = {
-  id: 'productId',
-  storeId: storeData.id,
-  categoryId: categoryData.id,
-  name: '청바지',
-  price: 25000,
-  image: 'imageURL',
-  discountRate: 10,
-  discountStartTime: '2025-06-17T01:49:11.128Z',
-  discountEndTime: '2025-06-27T01:49:11.128Z',
-};
-
-const sizeData = {
-  id: 'sizeId',
-  name: 'L',
-  size: { en: 'L', ko: '라지' },
-};
-
-const stockData = {
-  id: 'stockId',
-  productId: productData.id,
-  sizeId: sizeData.id,
-  quantity: 100,
-};
-
-const cartData = {
-  id: 'cartId',
-  buyerId: userData.id,
-};
-
-const cartItemData = {
-  id: 'cartItemId',
-  cartId: cartData.id,
-  productId: productData.id,
-  sizeId: sizeData.id,
-};
-
-const orderData = {
-  id: 'orderId',
-  userId: userData.id,
-  name: '홍길동',
-  phoneNumber: '010-1234-1234',
-  address: '천안',
-  subtotal: 45000,
-  totalQuantity: 2,
-  usePoint: 1000,
-};
-
-const orderItemData = {
-  id: 'orderItemId',
-  price: 22500,
-  quantity: 2,
-  productId: productData.id,
-  sizeId: sizeData.id,
-  orderId: orderData.id,
-};
-
-const paymentData = {
-  id: 'paymentId',
-  price: 44000,
-  status: PaymentStatus.CompletedPayment,
-  orderId: orderData.id,
-};
+import { PaymentStatus } from '@prisma/client';
+import * as orderTestUtil from '../lib/utils/orderTestUtil';
 
 describe('주문 API 테스트', () => {
   beforeEach(async () => {
     await clearDatabase(prismaClient);
-
-    await prismaClient.grade.create({
-      data: gradeData,
-    });
-
-    await prismaClient.user.create({
-      data: userData,
-    });
-
-    await prismaClient.store.create({
-      data: storeData,
-    });
-
-    await prismaClient.category.create({
-      data: categoryData,
-    });
-
-    await prismaClient.product.create({
-      data: productData,
-    });
-
-    await prismaClient.size.create({
-      data: sizeData,
-    });
-
-    await prismaClient.stock.create({
-      data: stockData,
-    });
-
-    await prismaClient.cart.create({
-      data: cartData,
-    });
-
-    await prismaClient.cartItem.create({
-      data: cartItemData,
-    });
+    await orderTestUtil.seedTestData();
   });
 
   afterAll(async () => {
@@ -144,37 +16,59 @@ describe('주문 API 테스트', () => {
   });
 
   describe('POST /api/order', () => {
-    test.skip('필수 값이 누락되면 400을 반환한다', async () => {
-      const response = await request(app).post('/api/order').send({});
+    const orderRequest = {
+      name: '길동이',
+      phoneNumber: '010-1234-1234',
+      address: '서울',
+      orderItems: [
+        { productId: orderTestUtil.productData.id, sizeId: orderTestUtil.sizeData.id, quantity: 2 },
+      ],
+      usePoint: 1000,
+    };
+    const subtotal = orderTestUtil.productData.price * orderRequest.orderItems[0].quantity;
+    const totalQuantity = orderRequest.orderItems[0].quantity;
+    test('필수 값이 누락되면 400을 반환한다', async () => {
+      const errorOrderRequest = {
+        name: 1234,
+        phoneNumber: '010-1234-1234',
+        address: '서울',
+        orderItems: [
+          {
+            productId: orderTestUtil.productData.id,
+            sizeId: orderTestUtil.sizeData.id,
+            quantity: 2,
+          },
+        ],
+        usePoint: 1000,
+      };
+      const { agent } = await orderTestUtil.buyerUserLogin();
+      const response = await agent.post('/api/order').send(errorOrderRequest);
       expect(response.status).toBe(400);
     });
 
     test.skip('인증되지 않은 유저는 401을 반환한다', async () => {
-      const response = await request(app).post('/api/order').set('Authorization', '').send(orderData);
+      const response = await request(app).post('/api/order').send(orderRequest);
       expect(response.status).toBe(401);
     });
 
-    test.skip('접근 권한이 없는 유저는 403을 반환한다', async () => {
-      const otherUserToken = 'dummy.other.token';
-      const response = await request(app)
-        .post('/api/order')
-        .set('Authorization', `Bearer ${otherUserToken}`)
-        .send(cartData);
+    test('접근 권한이 없는 유저는 403을 반환한다', async () => {
+      const { agent } = await orderTestUtil.sellerUserLogin();
+      const response = await agent.post('/api/order').send(orderRequest);
       expect(response.status).toBe(403);
     });
 
-    test('사용자가 장바구니에 담은 상품으로 주문을 생성하면 201을 반환한다', async () => {
-      const response = await request(app).post('/api/order').send(orderData);
-
+    test('사용자가 주문을 생성하면 201을 반환한다', async () => {
+      const { agent } = await orderTestUtil.buyerUserLogin();
+      const response = await agent.post('/api/order').send(orderRequest);
       expect(response.status).toBe(201);
       expect(response.body).toMatchObject({
         id: expect.any(String),
-        name: orderData.name,
-        phoneNumber: orderData.phoneNumber,
-        address: orderData.address,
-        subtotal: orderData.subtotal,
-        totalQuantity: orderData.totalQuantity,
-        usePoint: orderData.usePoint,
+        name: orderRequest.name,
+        phoneNumber: orderRequest.phoneNumber,
+        address: orderRequest.address,
+        subtotal: subtotal,
+        totalQuantity: totalQuantity,
+        usePoint: orderRequest.usePoint,
         orderItems: expect.any(Array),
         payments: {
           id: expect.any(String),
@@ -188,102 +82,68 @@ describe('주문 API 테스트', () => {
     });
 
     describe('GET /api/order', () => {
-      test.skip('인증되지 않은 유저는 401을 반환한다', async () => {
-        const response = await request(app).get('/api/order').set('Authorization', '');
+      test('인증되지 않은 유저는 401을 반환한다', async () => {
+        const response = await request(app).get('/api/order');
         expect(response.status).toBe(401);
       });
 
-      test.skip('접근 권한이 없는 유저는 403을 반환한다', async () => {
-        const otherUserToken = 'dummy.other.token';
-        const response = await request(app)
-          .get('/api/order')
-          .set('Authorization', `Bearer ${otherUserToken}`);
+      test('접근 권한이 없는 유저는 403을 반환한다', async () => {
+        const { agent } = await orderTestUtil.sellerUserLogin();
+        const response = await agent.get('/api/order');
         expect(response.status).toBe(403);
       });
 
-      test('모든 주문 조회에 성공하면 200을 반환한다', async () => {
-        await prismaClient.order.create({
-          data: orderData,
-        });
-
-        await prismaClient.orderItem.create({
-          data: orderItemData,
-        });
-
-        await prismaClient.payment.create({
-          data: paymentData,
-        });
-
-        const response = await request(app).get('/api/order');
+      test('주문이 완료된 건만 주문 조회에 성공하여 200을 반환한다', async () => {
+        await orderTestUtil.seedOrderTestData();
+        const { agent } = await orderTestUtil.buyerUserLogin();
+        const response = await agent.get('/api/order?status=CompletedPayment&page=1&pageSize=10');
 
         expect(response.status).toBe(200);
 
-        expect(response.body[0]).toMatchObject({
-          id: orderData.id,
-          name: orderData.name,
-          phoneNumber: orderData.phoneNumber,
-          address: orderData.address,
-          subtotal: orderData.subtotal,
-          totalQuantity: orderData.totalQuantity,
-          usePoint: orderData.usePoint,
+        expect(response.body.data[0]).toMatchObject({
+          id: orderTestUtil.orderData.id,
+          name: orderTestUtil.orderData.name,
+          phoneNumber: orderTestUtil.orderData.phoneNumber,
+          address: orderTestUtil.orderData.address,
+          subtotal: orderTestUtil.orderData.subtotal,
+          totalQuantity: orderTestUtil.orderData.totalQuantity,
+          usePoint: orderTestUtil.orderData.usePoint,
           orderItems: expect.any(Array),
           payments: {
             id: expect.any(String),
-            price: paymentData.price,
-            status: 'CompletedPayment',
+            price: orderTestUtil.paymentData.price,
+            status: orderTestUtil.paymentData.status,
             createdAt: expect.any(String),
             updatedAt: expect.any(String),
-            orderId: orderData.id,
+            orderId: orderTestUtil.orderData.id,
           },
         });
       });
     });
     describe('GET /api/order:id', () => {
-      test.skip('인증되지 않은 유저는 401을 반환한다', async () => {
-        const response = await request(app).get('/api/order/Id').set('Authorization', '');
+      test('인증되지 않은 유저는 401을 반환한다', async () => {
+        const response = await request(app).get('/api/order/Id');
         expect(response.status).toBe(401);
       });
 
-      test.skip('접근 권한이 없는 유저는 403을 반환한다', async () => {
-        const otherUserToken = 'dummy.other.token';
-        const response = await request(app)
-          .get('/api/order/Id')
-          .set('Authorization', `Bearer ${otherUserToken}`);
+      test('접근 권한이 없는 유저는 403을 반환한다', async () => {
+        const { agent } = await orderTestUtil.sellerUserLogin();
+        const response = await agent.get('/api/order');
         expect(response.status).toBe(403);
       });
 
-      test('orderId가 존재하지 않는다면 404를 반환한다', async () => {
-        await prismaClient.order.create({
-          data: orderData,
-        });
-
-        const response = await request(app).get(`/api/order/errorId`);
-
-        expect(response.status).toBe(404);
-        expect(response.body.error).toBe(`Order not found`);
-      });
       test('orderId로 검색하여 특정 주문의 상세 정보를 조회하면 200을 반환한다', async () => {
-        await prismaClient.order.create({
-          data: orderData,
-        });
-
-        await prismaClient.orderItem.create({
-          data: orderItemData,
-        });
-
-        await prismaClient.payment.create({
-          data: paymentData,
-        });
-
-        const response = await request(app).get(`/api/order/${orderData.id}`);
+        await orderTestUtil.seedOrderTestData();
+        const { agent } = await orderTestUtil.buyerUserLogin();
+        const response = await agent.get(`/api/order/${orderTestUtil.orderData.id}`);
 
         expect(response.status).toBe(200);
         expect(response.body).toMatchObject({
-          id: orderData.id,
-          name: orderData.name,
-          phoneNumber: orderData.phoneNumber,
-          address: orderData.address,
-          usePoint: orderData.usePoint,
+          id: orderTestUtil.orderData.id,
+          name: orderTestUtil.orderData.name,
+          phoneNumber: orderTestUtil.orderData.phoneNumber,
+          address: orderTestUtil.orderData.address,
+          usePoint: orderTestUtil.orderData.usePoint,
           subtotal: expect.any(Number),
           totalQuantity: expect.any(Number),
           createdAt: expect.any(String),
@@ -294,89 +154,84 @@ describe('주문 API 테스트', () => {
             status: PaymentStatus.CompletedPayment,
             createdAt: expect.any(String),
             updatedAt: expect.any(String),
-            orderId: orderData.id,
+            orderId: orderTestUtil.orderData.id,
           },
         });
       });
     });
 
     describe('PATCH /api/order/:id', () => {
-      test.skip('필수 값이 누락되면 400을 반환한다', async () => {
-        const response = await request(app).patch('/api/order/Id').send({});
+      const updateOrderRequest = {
+        name: '둘리',
+        phoneNumber: '010-1234-1234',
+        address: '천안',
+        orderItems: [
+          {
+            productId: orderTestUtil.productData.id,
+            sizeId: orderTestUtil.sizeData.id,
+            quantity: 2,
+          },
+        ],
+        usePoint: 1000,
+      };
+      test('필수 값이 누락되면 400을 반환한다', async () => {
+        const errorUpdateOrderRequest = {
+          phoneNumber: '010-1234-1234',
+          address: '천안',
+          orderItems: [
+            {
+              productId: orderTestUtil.productData.id,
+              sizeId: orderTestUtil.sizeData.id,
+              quantity: 2,
+            },
+          ],
+          usePoint: 1000,
+        };
+        const { agent } = await orderTestUtil.buyerUserLogin();
+        const response = await agent
+          .patch(`/api/order/${orderTestUtil.orderData.id}`)
+          .send(errorUpdateOrderRequest);
         expect(response.status).toBe(400);
       });
 
       test.skip('인증되지 않은 유저는 401을 반환한다', async () => {
+        await orderTestUtil.seedOrderTestData();
         const response = await request(app)
-          .patch('/api/order/Id')
-          .set('Authorization', '')
-          .send(orderData);
+          .patch(`/api/order/${orderTestUtil.orderData.id}`)
+          .send(updateOrderRequest);
         expect(response.status).toBe(401);
       });
 
-      test.skip('접근 권한이 없는 유저는 403을 반환한다', async () => {
-        const otherUserToken = 'dummy.other.token';
-        const response = await request(app)
-          .patch('/api/order/Id')
-          .set('Authorization', `Bearer ${otherUserToken}`)
-          .send(cartData);
+      test('접근 권한이 없는 유저는 403을 반환한다', async () => {
+        const { agent } = await orderTestUtil.sellerUserLogin();
+        const response = await agent
+          .patch(`/api/order/${orderTestUtil.orderData.id}`)
+          .send(updateOrderRequest);
         expect(response.status).toBe(403);
       });
 
       test('orderId가 존재하지 않는다면 404를 반환한다', async () => {
-        await prismaClient.order.create({
-          data: orderData,
-        });
-
-        await prismaClient.orderItem.create({
-          data: orderItemData,
-        });
-
-        await prismaClient.payment.create({
-          data: paymentData,
-        });
-
-        const updateData = {
-          name: '구매자',
-          phoneNumber: '010-1234-1111',
-          address: '서울',
-          usePoint: 500,
-        };
-        const response = await request(app).patch(`/api/order/errorId`).send(updateData);
+        await orderTestUtil.seedOrderTestData();
+        const { agent } = await orderTestUtil.buyerUserLogin();
+        const response = await agent.patch(`/api/order/errorId`).send(updateOrderRequest);
 
         expect(response.status).toBe(404);
-        expect(response.body.error).toBe(`Order not found`);
       });
-      test('구매자 정보를 수정하면 200을 반환한다', async () => {
-        await prismaClient.order.create({
-          data: orderData,
-        });
-
-        await prismaClient.orderItem.create({
-          data: orderItemData,
-        });
-
-        await prismaClient.payment.create({
-          data: paymentData,
-        });
-
-        const updateData = {
-          name: '구매자',
-          phoneNumber: '010-1234-1111',
-          address: '서울',
-          usePoint: 500,
-        };
-
-        const response = await request(app).patch(`/api/order/${orderData.id}`).send(updateData);
+      test('주문 정보를 수정하면 200을 반환한다', async () => {
+        await orderTestUtil.seedOrderTestData();
+        const { agent } = await orderTestUtil.buyerUserLogin();
+        const response = await agent
+          .patch(`/api/order/${orderTestUtil.orderData.id}`)
+          .send(updateOrderRequest);
 
         expect(response.status).toBe(200);
 
         expect(response.body).toMatchObject({
-          id: orderData.id,
-          name: updateData.name,
-          phoneNumber: updateData.phoneNumber,
-          address: updateData.address,
-          usePoint: updateData.usePoint,
+          id: orderTestUtil.orderData.id,
+          name: updateOrderRequest.name,
+          phoneNumber: updateOrderRequest.phoneNumber,
+          address: updateOrderRequest.address,
+          usePoint: updateOrderRequest.usePoint,
           subtotal: expect.any(Number),
           totalQuantity: expect.any(Number),
           createdAt: expect.any(String),
@@ -387,62 +242,82 @@ describe('주문 API 테스트', () => {
             status: PaymentStatus.CompletedPayment,
             createdAt: expect.any(String),
             updatedAt: expect.any(String),
-            orderId: orderData.id,
+            orderId: orderTestUtil.orderData.id,
           },
         });
       });
     });
     describe('DELETE /api/order/:id', () => {
-      test.skip('인증되지 않은 유저는 401을 반환한다', async () => {
-        const response = await request(app).delete('/api/order/Id').set('Authorization', '');
+      test('결제가 완료된 건에 대해 삭제를 진행하면 400을 반환한다', async()=>{
+        await orderTestUtil.seedOrderTestData();
+        const { agent } = await orderTestUtil.buyerUserLogin();
+        const response = await agent.delete(`/api/order/${orderTestUtil.orderData.id}`);
+        expect(response.status).toBe(400);
+      })
+
+      test('인증되지 않은 유저는 401을 반환한다', async () => {
+        const response = await request(app).delete('/api/order/Id');
         expect(response.status).toBe(401);
       });
 
-      test.skip('접근 권한이 없는 유저는 403을 반환한다', async () => {
-        const otherUserToken = 'dummy.other.token';
-        const response = await request(app)
+      test('접근 권한이 없는 유저는 403을 반환한다', async () => {
+        const { agent } = await orderTestUtil.sellerUserLogin();
+        const response = await agent
           .delete('/api/order/Id')
-          .set('Authorization', `Bearer ${otherUserToken}`);
         expect(response.status).toBe(403);
       });
 
       test('orderId가 존재하지 않는다면 404를 반환한다', async () => {
-        await prismaClient.order.create({
-          data: orderData,
-        });
-
-        const response = await request(app).delete(`/api/order/errorId`);
+        const { agent } = await orderTestUtil.buyerUserLogin();
+        const response = await agent.delete(`/api/order/errorId`);
 
         expect(response.status).toBe(404);
-        expect(response.body.error).toBe(`Order not found`);
       });
-      test('order 삭제에 성공하면 204를 반환한다', async () => {
-        const paymentData2 = {
-          id: 'paymentId',
+      test('결제 대기중인 주문 삭제에 성공하면 204를 반환한다', async () => {
+        const orderData2 = {
+          id: 'orderId2',
+          userId: orderTestUtil.buyerUserData.id,
+          name: '홍길동',
+          phoneNumber: '010-1234-1234',
+          address: '천안',
+          subtotal: 45000,
+          totalQuantity: 2,
+          usePoint: 1000,
+        };
+        
+         const orderItemData2 = {
+          id: 'orderItemId2',
+          price: 22500,
+          quantity: 2,
+          productId: orderTestUtil.productData.id,
+          sizeId: orderTestUtil.sizeData.id,
+          orderId: orderData2.id,
+        };
+        
+         const paymentData2 = {
+          id: 'paymentId2',
           price: 44000,
           status: PaymentStatus.WaitingPayment,
-          orderId: orderData.id,
+          orderId: orderData2.id,
         };
 
         await prismaClient.order.create({
-          data: orderData,
+          data: orderData2,
         });
 
         await prismaClient.orderItem.create({
-          data: orderItemData,
+          data: orderItemData2,
         });
 
         await prismaClient.payment.create({
           data: paymentData2,
         });
 
-        const response = await request(app).delete(`/api/order/${orderData.id}`);
+        const { agent } = await orderTestUtil.buyerUserLogin();
+        const response = await agent.delete(`/api/order/${orderData2.id}`);
 
         expect(response.status).toBe(204);
 
-        const response2 = await request(app).get(`/api/order/${orderData.id}`);
-
-        expect(response2.status).toBe(404);
       });
     });
   });
