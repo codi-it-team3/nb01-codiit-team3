@@ -11,16 +11,18 @@ import { UpdateCartItemRequestDTO } from '../dto/cartDTO';
 import { UpdateCartItemStruct } from '../structs/cartStruct';
 import { validate } from 'superstruct';
 import BadRequestError from '../lib/errors/BadRequestError';
+import UnauthorizedError from '../lib/errors/UnauthorizedError';
 
 export const createCartController = async (req: Request, res: Response) => {
-  const buyerId = req.user!.id;
+  if (!req.user) throw new UnauthorizedError('인증되지 않은 유저입니다.');
+  const buyerId = req.user.id;
   const cart = await createCartService(buyerId);
   res.status(201).json(cart);
 };
 
 export const getCartListController = async (req: Request, res: Response) => {
-
-  const buyerId = req.user!.id;
+  if (!req.user) throw new UnauthorizedError('인증되지 않은 유저입니다.');
+  const buyerId = req.user.id;
 
   const cart = await getCartListService(buyerId);
   const response = serializeCart(cart);
@@ -29,10 +31,9 @@ export const getCartListController = async (req: Request, res: Response) => {
 };
 
 export const updateCartItemController = async (req: Request, res: Response) => {
-
   const [error] = validate(req.body, UpdateCartItemStruct);
 
-  if (error) throw new BadRequestError('유효하지 않은 요청입니다.')
+  if (error) throw new BadRequestError(`요청 데이터가 유효하지 않습니다: ${error.message}`);
 
   const updateData: UpdateCartItemRequestDTO = req.body;
   const updatedItem = await updateCartItemService(updateData);

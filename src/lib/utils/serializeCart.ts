@@ -2,7 +2,7 @@ import {
   CartResponseDTO,
   CartItemResponseDTO,
   CartItemWithCartResponseDTO,
-  StocksResponseDTO,
+  CartStocksResponseDTO,
 } from '../../dto/cartDTO';
 
 export function serializeCart(cart: CartResponseDTO) {
@@ -41,7 +41,7 @@ export function serializeCart(cart: CartResponseDTO) {
           createdAt: item.product.store.createdAt,
           updatedAt: item.product.store.updatedAt,
         },
-        stocks: item.product.stocks.map((stock: StocksResponseDTO) => {
+        stocks: item.product.stocks.map((stock: CartStocksResponseDTO) => {
           const sizeValue = stock.size.size;
           const isSizeObj =
             typeof sizeValue === 'object' && sizeValue !== null && !Array.isArray(sizeValue);
@@ -96,7 +96,7 @@ export function serializeCartItem(cartItem: CartItemWithCartResponseDTO) {
         createdAt: cartItem.product.store.createdAt,
         updatedAt: cartItem.product.store.updatedAt,
       },
-      stocks: cartItem.product.stocks.map((stock: StocksResponseDTO) => {
+      stocks: cartItem.product.stocks.map((stock: CartStocksResponseDTO) => {
         const sizeValue = stock.size.size;
         const isSizeObj =
           typeof sizeValue === 'object' && sizeValue !== null && !Array.isArray(sizeValue);
