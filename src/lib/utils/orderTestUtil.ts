@@ -1,8 +1,8 @@
-import { GradeName, CategoryName, UserType } from '@prisma/client';
-import { prismaClient } from '../prismaClient';
+import { GradeName, CategoryName, PaymentStatus, UserType } from '@prisma/client';
+import { prismaClient } from '../../lib/prismaClient';
+import bcrypt from 'bcrypt';
 import app from '../../app';
 import request from 'supertest';
-import bcrypt from 'bcrypt';
 
 export const gradeData = {
   id: 'grade_green',
@@ -18,6 +18,7 @@ export const buyerUserData = {
   password: 'password',
   image: null,
   type: UserType.BUYER,
+  points: 10000
 };
 
 export const sellerUserData = {
@@ -79,7 +80,33 @@ export const cartItemData = {
   cartId: cartData.id,
   productId: productData.id,
   sizeId: sizeData.id,
+};
+
+export const orderData = {
+  id: 'orderId',
+  userId: buyerUserData.id,
+  name: '홍길동',
+  phoneNumber: '010-1234-1234',
+  address: '천안',
+  subtotal: 45000,
+  totalQuantity: 2,
+  usePoint: 1000,
+};
+
+export const orderItemData = {
+  id: 'orderItemId',
+  price: 22500,
   quantity: 2,
+  productId: productData.id,
+  sizeId: sizeData.id,
+  orderId: orderData.id,
+};
+
+export const paymentData = {
+  id: 'paymentId',
+  price: 44000,
+  status: PaymentStatus.CompletedPayment,
+  orderId: orderData.id,
 };
 
 export const seedTestData = async () => {
@@ -98,10 +125,11 @@ export const seedTestData = async () => {
   ]);
 };
 
-export const seedCartTestData = async () => {
+export const seedOrderTestData = async () => {
   await prismaClient.$transaction([
-    prismaClient.cart.create({ data: cartData }),
-    prismaClient.cartItem.create({ data: cartItemData }),
+    prismaClient.order.create({ data: orderData }),
+    prismaClient.orderItem.create({ data: orderItemData }),
+    prismaClient.payment.create({ data: paymentData }),
   ]);
 };
 
