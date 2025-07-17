@@ -41,12 +41,13 @@ model Grade {
 
 model Store {
   id                String              @id @default(cuid())
-  name              String              @unique
+  name              String
   createdAt         DateTime            @default(now())
   updatedAt         DateTime            @updatedAt
   user              User                @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId            String              @unique
   address           String
+  detailAddress     String
   phoneNumber       String
   content           String
   image             String              @default("")
@@ -60,10 +61,11 @@ model Store {
 }
 
 model FavoriteStore {
-  store   Store  @relation(fields: [storeId], references: [id], onDelete: Cascade)
-  storeId String
-  user    User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId  String
+  store     Store    @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  storeId   String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  createdAt DateTime @default(now())
 
   @@id([storeId, userId])
 }

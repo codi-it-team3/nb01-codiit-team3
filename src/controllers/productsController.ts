@@ -4,6 +4,7 @@ import * as reviewsService from '../services/reviewsSerivce';
 import * as inquiriesSerivce from '../services/inquiriesService';
 import BadRequestError from '../lib/errors/BadRequestError';
 import NotFoundError from '../lib/errors/ProductNotFoundError';
+import UnauthorizedError from '../lib/errors/UnauthorizedError';
 import {
   CreateInquiryBodyStruct,
   CreateProductBodyStruct,
@@ -15,23 +16,26 @@ import { IdParamsStruct } from '../structs/commonStructs';
 import { create } from 'superstruct';
 import { ProductQuery } from '../types/product';
 import reviewResponseDTO from '../dto/reviewResponseDTO';
-import UnauthorizedError from '../lib/errors/UnauthorizedError';
 
 export async function createProduct(req: Request, res: Response, next: NextFunction) {
   try {
+    if (!req.user) throw new UnauthorizedError('인증되지 않은 유저입니다.');
     const data = create(req.body, CreateProductBodyStruct);
-    const createdProduct = await productsService.createProduct(data);
+    const createdProduct = await productsService.createProduct(data, req.user.id);
     res.status(201).send(createdProduct);
   } catch (err) {
-    next(new BadRequestError((err as Error).message));
+    next(err);
   }
 }
 
 export async function getProductList(req: Request, res: Response, next: NextFunction) {
   try {
     const params = req.query as ProductQuery;
-    const { list, total, page } = await productsService.getProductList(params);
-    res.status(200).json({ list, total, page });
+    const { list, total, page, limit, totalPages } = await productsService.getProductList(
+      params,
+      req.user?.id,
+    );
+    res.status(200).json({ list, total, page, limit, totalPages });
   } catch (err) {
     next(err);
   }
@@ -50,9 +54,10 @@ export async function getProductDetail(req: Request, res: Response, next: NextFu
 
 export async function updateProduct(req: Request, res: Response, next: NextFunction) {
   try {
+    if (!req.user) throw new UnauthorizedError('인증되지 않은 유저입니다.');
     const { id } = req.params;
     const data = create(req.body, UpdateProductBodyStruct);
-    const updated = await productsService.updateProduct(id, data);
+    const updated = await productsService.updateProduct(id, data, req.user.id);
     res.send(updated);
   } catch (err) {
     if (err instanceof NotFoundError) return next(err);
@@ -62,8 +67,9 @@ export async function updateProduct(req: Request, res: Response, next: NextFunct
 
 export async function deleteProduct(req: Request, res: Response, next: NextFunction) {
   try {
+    if (!req.user) throw new UnauthorizedError('인증되지 않은 유저입니다.');
     const { id } = req.params;
-    await productsService.deleteProduct(id);
+    await productsService.deleteProduct(id, req.user.id);
     res.status(204).send();
   } catch (err) {
     next(err);
