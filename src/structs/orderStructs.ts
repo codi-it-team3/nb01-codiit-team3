@@ -29,3 +29,4 @@ export const OrderParamsStruct = object({
   status: optional(enums(Object.values(PaymentStatus))),
 });
 
+export const OrderIdStruct = string();

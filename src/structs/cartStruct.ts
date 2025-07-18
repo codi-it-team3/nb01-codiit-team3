@@ -6,3 +6,5 @@ export const UpdateCartItemStruct = object({
   sizeId: string(),
   quantity: min(number(), 1),
 });
+
+export const CartItemIdStruct = string();
