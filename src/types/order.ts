@@ -57,7 +57,7 @@ export type PaginatedOrderList = {
   };
 };
 
-export type updateOrderData = {
+export type UpdateOrderData = {
   name: string;
   phoneNumber: string;
   address: string;
@@ -68,4 +68,13 @@ export type updateOrderData = {
     price: number;
   }[];
   usePoint: number;
-}
+};
+
+export type SalesLogs = {
+  productId: string;
+  storeId: string;
+  userId: string;
+  price: number;
+  quantity: number;
+  soldAt: Date;
+}[];
