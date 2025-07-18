@@ -1,4 +1,9 @@
-import { CreateOrder, PaginationParams, PaginatedOrderList, updateOrderData } from '../types/order';
+import {
+  PaginationParams,
+  PaginatedOrderList,
+  UpdateOrderData,
+  CreateOrder,
+} from '../types/order';
 import {
   createOrder,
   findUserId,
@@ -6,40 +11,64 @@ import {
   getOrderList,
   getOrderById,
   updateOrder,
-  findUsePoint,
   deleteOrder,
   findPaymentByStatus,
   findOrderById,
+  decreaseStock,
+  decreaseUserPoint,
+  createSalesLogs,
 } from '../repositories/orderRepository';
 import BadRequestError from '../lib/errors/BadRequestError';
 import NotFoundError from '../lib/errors/ProductNotFoundError';
 import { PaymentStatus } from '@prisma/client';
+import { prismaClient } from '../lib/prismaClient';
 
 export const createOrderService = async (data: CreateOrder, userId: string) => {
-  const user = await findUserId(data.userId);
+  const user = await findUserId(userId);
   if (!user) throw new BadRequestError('유저 정보가 존재하지 않습니다');
-  if (user.points < data.usePoint) throw new BadRequestError('포인트가 부족합니다');
+  if (user.points < data.usePoint) throw new BadRequestError('포인트가 부족합니다.');
 
-  const priceMap = await findProductByPrice(data.orderItems.map((item) => item.productId));
+  return await prismaClient.$transaction(async (tx) => {
+    for (const item of data.orderItems) {
+      const success = await decreaseStock(tx, item);
+      if (!success) throw new BadRequestError('재고가 부족합니다');
+    }
 
-  const currentUsePoint = await findUsePoint(userId);
-  if (currentUsePoint === null) throw new NotFoundError('user', userId);
-  if (data.usePoint > currentUsePoint)
-    throw new BadRequestError('사용할 수 있는 포인트를 초과했습니다.');
+    if (data.usePoint > 0) {
+      const success = await decreaseUserPoint(tx, data.userId, data.usePoint);
+      if (!success) throw new BadRequestError('포인트가 부족합니다');
+    }
+    const priceMap = await findProductByPrice(
+      tx,
+      data.orderItems.map((item) => item.productId),
+    );
 
-  const subtotal = data.orderItems.reduce((sum, item) => {
-    const price = priceMap[item.productId];
-    if (price == null) throw new BadRequestError('상품 가격이 없습니다.');
-    return sum + price * item.quantity;
-  }, 0);
+    const subtotal = data.orderItems.reduce((sum, item) => {
+      const price = priceMap[item.productId];
+      if (price == null) throw new BadRequestError('상품 가격이 없습니다.');
+      return sum + price * item.quantity;
+    }, 0);
 
-  const totalQuantity = data.orderItems.reduce((sum, item) => sum + item.quantity, 0);
+    const totalQuantity = data.orderItems.reduce((sum, item) => sum + item.quantity, 0);
 
-  return await createOrder({
-    ...data,
-    subtotal,
-    totalQuantity,
-    priceMap,
+    const order = await createOrder(tx, {
+      ...data,
+      subtotal,
+      totalQuantity,
+      priceMap,
+    });
+
+    const salesLogData = order.orderItems.map((item) => ({
+      productId: item.productId,
+      storeId: item.product.storeId,
+      userId: order.userId,
+      price: item.price,
+      quantity: item.quantity,
+      soldAt: new Date(),
+    }));
+    await createSalesLogs(tx, salesLogData);
+
+    return order;
   });
 };
 
@@ -57,30 +86,32 @@ export const getOrderByIdService = async (orderId: string) => {
 };
 
 export const updateOrderService = async (
-  updateData: updateOrderData,
+  updateData: UpdateOrderData,
   orderId: string,
   userId: string,
 ) => {
-  const existingOrder = await findOrderById(orderId);
+  return await prismaClient.$transaction(async(tx)=>{
+const existingOrder = await findOrderById(tx, orderId);
   if (!existingOrder) {
     throw new NotFoundError('주문', orderId);
   }
-  const currentUsePoint = await findUsePoint(userId);
-  if (currentUsePoint === null) throw new NotFoundError('user', userId);
-  if (updateData.usePoint > currentUsePoint)
-    throw new BadRequestError('사용할 수 있는 포인트를 초과했습니다.');
+  
+  if (updateData.usePoint > 0) {
+      const success = await decreaseUserPoint(tx, userId, updateData.usePoint);
+      if (!success) throw new BadRequestError('포인트가 부족합니다');
+    }
 
   const productId = updateData.orderItems.map((item) => item.productId);
-  const priceMap = await findProductByPrice(productId);
+  const priceMap = await findProductByPrice(tx, productId);
 
-  if (Object.keys(priceMap).length === 0)
-    throw new NotFoundError('product price', productId.join(', '));
   for (const item of updateData.orderItems) {
     if (priceMap[item.productId] == null) {
       throw new NotFoundError('상품 가격', item.productId);
     }
   }
-  return await updateOrder(updateData, orderId, priceMap);
+  return await updateOrder(tx, updateData, orderId, priceMap);
+  })
+  
 };
 
 export const deleteOrderService = async (orderId: string) => {
