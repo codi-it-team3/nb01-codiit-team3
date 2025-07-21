@@ -17,6 +17,7 @@ import {
   decreaseStock,
   decreaseUserPoint,
   createSalesLogs,
+  rewardUserPoint,
 } from '../repositories/orderRepository';
 import BadRequestError from '../lib/errors/BadRequestError';
 import NotFoundError from '../lib/errors/ProductNotFoundError';
@@ -67,6 +68,8 @@ export const createOrderService = async (data: CreateOrder, userId: string) => {
       soldAt: new Date(),
     }));
     await createSalesLogs(tx, salesLogData);
+
+    await rewardUserPoint(tx, userId, subtotal);
 
     return order;
   });

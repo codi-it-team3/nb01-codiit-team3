@@ -149,43 +149,42 @@ export const updateOrder = async (
   orderId: string,
   priceMap: Record<string, number>,
 ): Promise<OrderList> => {
-  
-    return await tx.order.update({
-      where: { id: orderId },
-      data: {
-        name: updateData.name,
-        phoneNumber: updateData.phoneNumber,
-        address: updateData.address,
-        usePoint: updateData.usePoint,
-        orderItems: {
-          deleteMany: {},
-          create: updateData.orderItems.map((item) => ({
-            product: { connect: { id: item.productId } },
-            size: { connect: { id: item.sizeId } },
-            quantity: item.quantity,
-            price: priceMap[item.productId],
-          })),
-        },
+  return await tx.order.update({
+    where: { id: orderId },
+    data: {
+      name: updateData.name,
+      phoneNumber: updateData.phoneNumber,
+      address: updateData.address,
+      usePoint: updateData.usePoint,
+      orderItems: {
+        deleteMany: {},
+        create: updateData.orderItems.map((item) => ({
+          product: { connect: { id: item.productId } },
+          size: { connect: { id: item.sizeId } },
+          quantity: item.quantity,
+          price: priceMap[item.productId],
+        })),
       },
-      include: {
-        orderItems: {
-          include: {
-            product: {
-              include: {
-                store: true,
-                stocks: {
-                  include: {
-                    size: true,
-                  },
+    },
+    include: {
+      orderItems: {
+        include: {
+          product: {
+            include: {
+              store: true,
+              stocks: {
+                include: {
+                  size: true,
                 },
               },
             },
-            size: true,
           },
+          size: true,
         },
-        payments: true,
       },
-    });
+      payments: true,
+    },
+  });
 };
 
 export const deleteOrder = async (orderId: string) => {
@@ -228,10 +227,7 @@ export const decreaseUserPoint = async (
   return updated.count > 0;
 };
 
-export const findProductByPrice = async (
-  tx: Prisma.TransactionClient,
-  productIds: string[],
-) => {
+export const findProductByPrice = async (tx: Prisma.TransactionClient, productIds: string[]) => {
   const products = await tx.product.findMany({
     where: { id: { in: productIds } },
     select: { id: true, price: true },
@@ -247,6 +243,36 @@ export const createSalesLogs = async (tx: Prisma.TransactionClient, logs: SalesL
   await tx.salesLog.createMany({
     data: logs,
   });
+};
+
+export const rewardUserPoint = async (
+  tx: Prisma.TransactionClient,
+  userId: string,
+  orderAmount: number,
+) => {
+  const result = await tx.salesLog.aggregate({
+    where: { userId },
+    _sum: { price: true },
+  });
+
+  const totalSpent = result._sum.price ?? 0;
+
+  const grade = await tx.grade.findFirst({
+    where: { minAmount: { lte: totalSpent } },
+    orderBy: { minAmount: 'desc' },
+  });
+
+  const pointRate = grade?.rate ?? 0;
+  const point = Math.floor((orderAmount * pointRate) / 100);
+
+  await tx.user.update({
+    where: { id: userId },
+    data: {
+      points: { increment: point },
+    },
+  });
+  
+  return point;
 };
 
 export const findUserId = async (userId: string) => {
