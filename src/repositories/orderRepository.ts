@@ -255,7 +255,7 @@ export const rewardUserPoint = async (
     _sum: { price: true },
   });
 
-  const totalSpent = result._sum.price ?? 0;
+  const totalSpent = (result._sum.price ?? 0) + orderAmount;
 
   const grade = await tx.grade.findFirst({
     where: { minAmount: { lte: totalSpent } },
@@ -265,13 +265,20 @@ export const rewardUserPoint = async (
   const pointRate = grade?.rate ?? 0;
   const point = Math.floor((orderAmount * pointRate) / 100);
 
+  const user = await tx.user.findUnique({
+    where: { id: userId },
+    select: { gradeId: true },
+  });
+
+  const isGradeChanged = grade?.id && grade.id !== user?.gradeId;
+
   await tx.user.update({
     where: { id: userId },
     data: {
       points: { increment: point },
+      ...(isGradeChanged && { gradeId: grade.id }),
     },
   });
-  
   return point;
 };
 
