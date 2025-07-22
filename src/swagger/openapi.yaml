@@ -1,0 +1,37 @@
+openapi: 3.0.0
+info:
+  title: CODI-IT API
+  version: 1.0.0
+  description: CODI-IT 프로젝트 - API 문서
+servers:
+  - url: http://localhost:3000
+
+paths:
+
+  # # 인증
+  # /login:
+  #   $ref: "./login.swagger.yaml#/login"
+  # /refresh:
+  #   $ref: "./refresh.swagger.yaml#/refresh"
+  # /logout:
+  #   $ref: "./logout.swagger.yaml#/logout"
+
+  # # 유저
+  # /users:
+  #   $ref: "./users.swagger.yaml#/users"
+  # /users/me:
+  #   $ref: "./users.swagger.yaml#/usersMe"
+  # /users/delete:
+  #   $ref: "./users.swagger.yaml#/usersDelete"
+
+  # 장바구니
+  /cart:
+    $ref: "./cart.swagger.yaml#/cart"
+  /cart/{cartId}}:
+    $ref: "./cart.swagger.yaml#/cartId"
+
+  # # 주문
+  # /order:
+  #   $ref: "./order.swagger.yaml#/order"
+  # /order/{orderId}:
+  #   $ref: "./order.swagger.yaml#/orderId"

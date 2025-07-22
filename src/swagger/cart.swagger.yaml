@@ -1,0 +1,262 @@
+
+cart:
+  post:
+    tags: [Cart]
+    summary: 장바구니 생성
+    security:
+      - bearerAuth: []
+    responses:
+      '201':
+        description: 장바구니 생성 성공
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Cart'
+      '400':
+        description: 이미 장바구니가 존재함
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+      '401':
+        description: 인증 실패
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+      '403':
+        description: 권한 없음(구매자/판매자 제한)
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+  get:
+    tags: [Cart]
+    summary: 내 장바구니 조회
+    security:
+      - bearerAuth: []
+    responses:
+      '200':
+        description: 장바구니 조회 성공
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Cart'
+      '401':
+        description: 인증 실패
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+      '404':
+        description: 장바구니 없음
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+      '403':
+        description: 권한 없음(구매자/판매자 제한)
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+  patch:
+    tags: [Cart]
+    summary: 장바구니 항목 추가/수정
+    security:
+      - bearerAuth: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/UpdateCartItemRequest'
+    responses:
+      '200':
+        description: 장바구니 항목 수정 성공
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CartItem'
+      '400':
+        description: 잘못된 요청/재고 부족 등
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+      '401':
+        description: 인증 실패
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+      '404':
+        description: 장바구니/상품/사이즈 없음
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+      '403':
+        description: 권한 없음(구매자/판매자 제한)
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+cartId:
+  get:
+    tags: [Cart]
+    summary: 장바구니 항목 상세 조회
+    security:
+      - bearerAuth: []
+    parameters:
+      - in: path
+        name: cartId
+        required: true
+        schema:
+          type: string
+        description: cartItem id
+    responses:
+      '200':
+        description: 장바구니 항목 조회 성공
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CartItem'
+      '401':
+        description: 인증 실패
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+      '404':
+        description: 장바구니 항목 없음
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+      '403':
+        description: 권한 없음(구매자/판매자 제한)
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+  delete:
+    tags: [Cart]
+    summary: 장바구니 항목 삭제
+    security:
+      - bearerAuth: []
+    parameters:
+      - in: path
+        name: cartId
+        required: true
+        schema:
+          type: string
+        description: cartItem id
+    responses:
+      '204':
+        description: 장바구니 항목 삭제 성공
+      '401':
+        description: 인증 실패
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+      '404':
+        description: 장바구니 항목 없음
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+      '403':
+        description: 권한 없음(구매자/판매자 제한)
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    Cart:
+      type: object
+      properties:
+        id:
+          type: string
+        buyerId:
+          type: string
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/CartItem'
+    CartItem:
+      type: object
+      properties:
+        id:
+          type: string
+        cartId:
+          type: string
+        productId:
+          type: string
+        sizeId:
+          type: string
+        quantity:
+          type: integer
+        product:
+          type: object
+          properties:
+            id:
+              type: string
+            name:
+              type: string
+            price:
+              type: integer
+            store:
+              type: object
+              properties:
+                id:
+                  type: string
+                name:
+                  type: string
+            stocks:
+              type: array
+              items:
+                type: object
+                properties:
+                  size:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                      size:
+                        type: string
+        cart:
+          type: object
+          properties:
+            id:
+              type: string
+            buyerId:
+              type: string
+    UpdateCartItemRequest:
+      type: object
+      required:
+        - cartId
+        - productId
+        - sizeId
+        - quantity
+      properties:
+        cartId:
+          type: string
+        productId:
+          type: string
+        sizeId:
+          type: string
+        quantity:
+          type: integer
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
