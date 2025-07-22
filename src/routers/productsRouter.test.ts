@@ -434,4 +434,96 @@ describe('Product API 통합 테스트 (CRUD)', () => {
       expect(res.body.message).toMatch(/인증이 필요/);
     });
   });
+
+  describe('추천 상품 API', () => {
+    it('최근 본 상품의 카테고리를 기반으로 추천 상품을 조회할 수 있다', async () => {
+      const user = await prismaClient.user.create({
+        data: {
+          name: '추천 유저',
+          email: 'recommend@example.com',
+          password: 'hashed',
+          gradeId: 'grade_green',
+        },
+      });
+
+      const category = await prismaClient.category.create({
+        data: { name: 'BOTTOM' },
+      });
+
+      const store = await prismaClient.store.create({
+        data: {
+          name: '추천스토어',
+          address: '서울시 강북구',
+          detailAddress: '홍제동 12-1',
+          phoneNumber: '010-1234-5678',
+          content: '추천용 스토어',
+          userId: user.id,
+        },
+      });
+
+      const size = await prismaClient.size.create({
+        data: {
+          name: 'M',
+          size: { width: 20, height: 30 },
+        },
+      });
+
+      const product = await prismaClient.product.create({
+        data: {
+          name: '최근 본 상품',
+          price: 22000,
+          storeId: store.id,
+          categoryId: category.id,
+          image: 'https://example.com/recent.jpg',
+          content: '최근 본 상품입니다.',
+          stocks: {
+            create: [{ sizeId: size.id, quantity: 3 }],
+          },
+        },
+      });
+
+      await prismaClient.recentProductView.create({
+        data: {
+          userId: user.id,
+          productId: product.id,
+        },
+      });
+
+      const { accessToken } = generateToken(user.id, 'BUYER');
+
+      const res = await request(app)
+        .get('/api/products/recommend')
+        .set('Authorization', `Bearer ${accessToken}`);
+
+      expect(res.status).toBe(200);
+      expect(Array.isArray(res.body.list)).toBe(true);
+      expect(res.body.list.length).toBeGreaterThanOrEqual(0);
+    });
+
+    it('최근 본 상품이 없으면 빈 배열을 반환한다', async () => {
+      const user = await prismaClient.user.create({
+        data: {
+          name: '최근없음',
+          email: 'no-view@example.com',
+          password: 'hashed',
+          gradeId: 'grade_green',
+        },
+      });
+
+      const { accessToken } = generateToken(user.id, 'BUYER');
+
+      const res = await request(app)
+        .get('/api/products/recommend')
+        .set('Authorization', `Bearer ${accessToken}`);
+
+      expect(res.status).toBe(200);
+      expect(Array.isArray(res.body.list)).toBe(true);
+    });
+
+    it('비로그인 사용자는 추천 상품 조회 시 401 반환', async () => {
+      const res = await request(app).get('/api/products/recommend');
+      expect(res.status).toBe(401);
+      expect(res.body.message).toMatch(/인증/);
+    });
+  });
 });

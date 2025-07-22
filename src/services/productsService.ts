@@ -12,6 +12,9 @@ import {
   getFilteredProductListAndCount,
   getProductDetailById,
   runUpdateProductTx,
+  getLatestProductView,
+  getProductListByCategoryExceptOne,
+  getPopularProductList,
 } from '../repositories/productsRepository';
 import { buildProductWhereQuery, buildProductOrderByQuery } from '../lib/utils/productQueryUtil';
 import { mapProductListWithStats } from '../lib/utils/productMapperUtil';
@@ -192,4 +195,18 @@ export async function deleteProduct(id: string, userId: string) {
   }
 
   await deleteProductById(id);
+}
+
+export async function getRecommendedProducts(userId: string) {
+  const latestView = await getLatestProductView(userId);
+
+  if (!latestView || !latestView.product) {
+    return await getPopularProductList(4);
+  }
+
+  const { id: lastProductId, categoryId } = latestView.product;
+
+  const recommendedProducts = await getProductListByCategoryExceptOne(categoryId, lastProductId, 4);
+
+  return recommendedProducts;
 }

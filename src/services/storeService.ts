@@ -1,7 +1,9 @@
 import * as storeRepository from '../repositories/storeRepository';
+import ForbiddenError from '../lib/errors/ForbiddenError';
 import ConflictError from '../lib/errors/ConflictError';
 import NotFoundError from '../lib/errors/ProductNotFoundError';
 import { CreateOrUpdateStoreInput } from '../types/store';
+import dayjs from 'dayjs';
 
 export const createStore = async (userId: string, data: CreateOrUpdateStoreInput) => {
   const existing = await storeRepository.findStoreByUserId(userId);
@@ -12,13 +14,18 @@ export const createStore = async (userId: string, data: CreateOrUpdateStoreInput
   return storeRepository.createStore(userId, data);
 };
 
-export const updateStore = async (userId: string, data: CreateOrUpdateStoreInput) => {
-  const store = await storeRepository.findStoreByUserId(userId);
-  if (!store) {
-    throw new NotFoundError('Store', userId);
+export const updateStore = async (
+  userId: string,
+  storeId: string,
+  data: CreateOrUpdateStoreInput,
+) => {
+  const store = await storeRepository.findStoreById(storeId);
+
+  if (!store || store.userId !== userId) {
+    throw new ForbiddenError(`Store 접근 권한 없음: ${storeId}`);
   }
 
-  return storeRepository.updateStore(store.id, data);
+  return storeRepository.updateStore(storeId, data);
 };
 
 export const getMyStoreDetail = async (userId: string) => {
@@ -27,17 +34,22 @@ export const getMyStoreDetail = async (userId: string) => {
     throw new NotFoundError('Store', userId);
   }
 
+  const now = dayjs();
+  const startOfMonth = now.startOf('month');
+
   const favoriteCount = store.favoriteBy.length;
+  const monthFavoriteCount = store.favoriteBy.filter((fav) =>
+    dayjs(fav.createdAt).isAfter(startOfMonth),
+  ).length;
   const productCount = store.products.length;
   const totalSoldCount = store.SalesLog.reduce((acc, log) => acc + log.quantity, 0);
-  const monthlyRevenue = store.MonthlyStoreSales[0]?.totalSales ?? 0;
 
   return {
     ...store,
     favoriteCount,
+    monthFavoriteCount,
     productCount,
     totalSoldCount,
-    monthlyRevenue,
   };
 };
 

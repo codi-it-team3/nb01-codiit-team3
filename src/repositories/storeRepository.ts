@@ -1,5 +1,6 @@
 import { prismaClient } from '../lib/prismaClient';
 import { CreateOrUpdateStoreInput } from '../types/store';
+
 export const createStore = async (userId: string, data: CreateOrUpdateStoreInput) => {
   const userExists = await prismaClient.user.findUnique({ where: { id: userId } });
   if (!userExists) {
@@ -10,11 +11,11 @@ export const createStore = async (userId: string, data: CreateOrUpdateStoreInput
     data: {
       userId,
       name: data.name,
-      address: `${data.address} ${data.detailAddress}`,
+      address: data.address,
       detailAddress: data.detailAddress,
       phoneNumber: data.phoneNumber,
       content: data.content,
-      image: data.image,
+      ...(data.image !== undefined && { image: data.image }),
     },
   });
 };
@@ -24,11 +25,11 @@ export const updateStore = async (storeId: string, data: CreateOrUpdateStoreInpu
     where: { id: storeId },
     data: {
       name: data.name,
-      address: `${data.address} ${data.detailAddress}`,
+      address: data.address,
       detailAddress: data.detailAddress,
       phoneNumber: data.phoneNumber,
       content: data.content,
-      image: data.image,
+      ...(data.image !== undefined && { image: data.image }),
     },
   });
 };

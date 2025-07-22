@@ -111,3 +111,56 @@ export async function getProductById(id: string) {
   });
   return product;
 }
+
+export const upsertProductView = async (userId: string, productId: string) => {
+  await prismaClient.recentProductView.deleteMany({ where: { userId, productId } });
+  await prismaClient.recentProductView.create({ data: { userId, productId } });
+};
+
+export const getLatestProductView = (userId: string) =>
+  prismaClient.recentProductView.findFirst({
+    where: { userId },
+    orderBy: { viewedAt: 'desc' },
+    select: {
+      product: {
+        select: {
+          id: true,
+          categoryId: true,
+        },
+      },
+    },
+  });
+
+export const getProductListByCategoryExceptOne = (
+  categoryId: string,
+  excludeProductId: string,
+  limit = 4,
+) =>
+  prismaClient.product.findMany({
+    where: {
+      categoryId,
+      id: { not: excludeProductId },
+    },
+    orderBy: { viewCount: 'desc' },
+    take: limit,
+    include: {
+      category: true,
+      stocks: { include: { size: true } },
+      store: true,
+      _count: { select: { reviews: true } },
+      SalesLog: { select: { quantity: true } },
+    },
+  });
+
+export const getPopularProductList = (limit = 4) =>
+  prismaClient.product.findMany({
+    orderBy: { viewCount: 'desc' },
+    take: limit,
+    include: {
+      category: true,
+      stocks: { include: { size: true } },
+      store: true,
+      _count: { select: { reviews: true } },
+      SalesLog: { select: { quantity: true } },
+    },
+  });

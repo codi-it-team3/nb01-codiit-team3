@@ -66,7 +66,6 @@ describe('Store API', () => {
     await prismaClient.$disconnect();
   });
 
-  // ✅ 기능 테스트
   describe('Store 기능 테스트', () => {
     it('POST /api/store - 스토어 생성', async () => {
       const res = await request(app)
@@ -88,7 +87,7 @@ describe('Store API', () => {
 
     it('PATCH /api/store - 스토어 수정', async () => {
       const res = await request(app)
-        .patch('/api/store')
+        .patch(`/api/store/${storeId}`)
         .set('Authorization', `Bearer ${accessToken}`)
         .send({
           name: '수정된상점명',
@@ -139,7 +138,7 @@ describe('Store API', () => {
 
     it('PATCH /api/store - 유효성 실패', async () => {
       const res = await request(app)
-        .patch('/api/store')
+        .patch(`/api/store/${storeId}`)
         .set('Authorization', `Bearer ${accessToken}`)
         .send({
           name: 'x',
@@ -162,6 +161,8 @@ describe('Store API', () => {
       expect(res.status).toBe(200);
       expect(typeof res.body.favoriteCount).toBe('number');
       expect(typeof res.body.productCount).toBe('number');
+      expect(typeof res.body.monthFavoriteCount).toBe('number');
+      expect(typeof res.body.totalSoldCount).toBe('number');
     });
 
     it('GET /api/store/:storeId - 특정 스토어 조회', async () => {
@@ -240,7 +241,6 @@ describe('Store API', () => {
     });
   });
 
-  // ✅ 인증/인가 전용 블록 분리
   describe('Authorization (인증/인가) 테스트', () => {
     it('POST /api/store - 인증 없이 요청 시 401 반환', async () => {
       const res = await request(app).post('/api/store').send({
@@ -269,7 +269,7 @@ describe('Store API', () => {
         });
 
       expect(res.status).toBe(403);
-      expect(res.body.message).toContain('판매자만 접근');
+      expect(res.body.message).toContain('판매자만 접근 가능합니다.');
     });
   });
 });

@@ -4,5 +4,5 @@ export interface CreateOrUpdateStoreInput {
   detailAddress: string;
   phoneNumber: string;
   content: string;
-  image: string;
+  image?: string;
 }

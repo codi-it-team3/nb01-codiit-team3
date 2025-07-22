@@ -8,6 +8,7 @@ import {
   min,
   unknown,
   defaulted,
+  optional,
 } from 'superstruct';
 
 export const CreateStoreBodyStruct = object({
@@ -16,7 +17,7 @@ export const CreateStoreBodyStruct = object({
   detailAddress: size(nonempty(string()), 1, 100),
   phoneNumber: size(nonempty(string()), 8, 20),
   content: size(nonempty(string()), 1, 1000),
-  image: nonempty(string()),
+  image: optional(nonempty(string())),
 });
 
 export const UpdateStoreBodyStruct = CreateStoreBodyStruct;
