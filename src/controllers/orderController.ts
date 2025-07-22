@@ -6,21 +6,25 @@ import {
   getOrderListService,
   updateOrderService,
 } from '../services/orderService';
-import { CreateOrderStuct, OrderParamsStruct, UpdateOrderStruct } from '../structs/orderStructs';
-import { create } from 'superstruct';
+import {
+  CreateOrderStuct,
+  OrderIdStruct,
+  OrderParamsStruct,
+  UpdateOrderStruct,
+} from '../structs/orderStructs';
 import { serializeOrder } from '../lib/utils/serializeOrder';
 import UnauthorizedError from '../lib/errors/UnauthorizedError';
 import BadRequestError from '../lib/errors/BadRequestError';
-import { validate } from 'superstruct';
+import { validate, create } from 'superstruct';
 import { OrderRequestDTO, OrderUpdateRequestDTO } from '../dto/orderDTO';
 
 export const createOrderController = async (req: Request, res: Response) => {
   if (!req.user) throw new UnauthorizedError('인증되지 않은 유저입니다.');
   const userId = req.user.id;
 
-  const [error] = validate(req.body, CreateOrderStuct);
+  const [bodyError] = validate(req.body, CreateOrderStuct);
 
-  if (error) throw new BadRequestError(`요청 데이터가 유효하지 않습니다: ${error.message}`);
+  if (bodyError) throw new BadRequestError(`요청 데이터가 유효하지 않습니다: ${bodyError.message}`);
 
   const orderData: OrderRequestDTO = {
     ...req.body,
@@ -36,26 +40,30 @@ export const getOrderListController = async (req: Request, res: Response) => {
   const userId = req.user.id;
 
   const params = create(req.query, OrderParamsStruct);
+
   const order = await getOrderListService(userId, params);
   res.status(200).json(order);
 };
 
 export const getOrderByIdController = async (req: Request, res: Response) => {
-  const orderId = req.params.id;
+  const orderId = create(req.params.id, OrderIdStruct);
+
   const order = await getOrderByIdService(orderId);
   res.status(200).json(order);
 };
 
 export const updateOrderController = async (req: Request, res: Response) => {
-  const [error] = validate(req.body, UpdateOrderStruct);
+  const [bodyError] = validate(req.body, UpdateOrderStruct);
 
-  if (error) throw new BadRequestError(`요청 데이터가 유효하지 않습니다: ${error.message}`);
+  if (bodyError) throw new BadRequestError(`요청 데이터가 유효하지 않습니다: ${bodyError.message}`);
 
-  const updateData:OrderUpdateRequestDTO = req.body;
+  const updateData: OrderUpdateRequestDTO = req.body;
   if (!req.user) throw new UnauthorizedError('인증되지 않은 유저입니다.');
 
   const userId = req.user.id;
-  const orderId = req.params.id;
+  const [paramError, orderId] = validate(req.params.id, OrderIdStruct);
+  if (paramError)
+    throw new BadRequestError(`요청 데이터가 유효하지 않습니다: ${paramError.message}`);
 
   const updateOrder = await updateOrderService(updateData, orderId, userId);
   const response = serializeOrder(updateOrder);
@@ -63,7 +71,9 @@ export const updateOrderController = async (req: Request, res: Response) => {
 };
 
 export const deleteOrderController = async (req: Request, res: Response) => {
-  const orderId = req.params.id;
+  const [paramError, orderId] = validate(req.params.id, OrderIdStruct);
+  if (paramError)
+    throw new BadRequestError(`요청 데이터가 유효하지 않습니다: ${paramError.message}`);
 
   await deleteOrderService(orderId);
   return res.status(204).send();

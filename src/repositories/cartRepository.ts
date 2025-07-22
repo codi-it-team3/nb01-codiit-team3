@@ -1,3 +1,4 @@
+import { Prisma } from '@prisma/client';
 import { prismaClient } from '../lib/prismaClient';
 import { CartItemList, CartList, UpdateCartItemData } from '../types/cart';
 
@@ -28,14 +29,14 @@ export const getCartList = async (buyerId: string): Promise<CartList | null> => 
 };
 
 export const updateCartItem = async (
+  tx: Prisma.TransactionClient,
   updateCartItem: UpdateCartItemData,
 ): Promise<CartItemList | null> => {
   const { cartId, productId, sizeId, quantity } = updateCartItem;
-
-  const existingItem = await getCartItem(cartId, productId, sizeId);
+  const existingItem = await findCartItem(tx, cartId, productId, sizeId);
 
   if (existingItem) {
-    return await prismaClient.cartItem.update({
+    return await tx.cartItem.update({
       where: {
         cartId_productId_sizeId: { cartId, productId, sizeId },
       },
@@ -44,16 +45,14 @@ export const updateCartItem = async (
         product: {
           include: {
             store: true,
-            stocks: {
-              include: { size: true },
-            },
+            stocks: { include: { size: true } },
           },
         },
         cart: true,
       },
     });
   } else {
-    return await prismaClient.cartItem.create({
+    return await tx.cartItem.create({
       data: {
         cartId,
         productId,
@@ -64,35 +63,13 @@ export const updateCartItem = async (
         product: {
           include: {
             store: true,
-            stocks: {
-              include: { size: true },
-            },
+            stocks: { include: { size: true } },
           },
         },
         cart: true,
       },
     });
   }
-};
-
-export const getStock = async (productId: string, sizeId: string) => {
-  return prismaClient.stock.findUnique({
-    where: {
-      productId_sizeId: {
-        productId,
-        sizeId,
-      },
-    },
-    select: {
-      quantity: true,
-    },
-  });
-};
-
-export const getCartItem = async (cartId: string, productId: string, sizeId: string) => {
-  return await prismaClient.cartItem.findUnique({
-    where: { cartId_productId_sizeId: { cartId, productId, sizeId } },
-  });
 };
 
 export const getCartItemList = async (cartItemId: string): Promise<CartItemList | null> => {
@@ -120,31 +97,58 @@ export const deleteCartItem = async (cartItemId: string) => {
   });
 };
 
-export const getCartByBuyerId = async (buyerId: string) => {
+export const findStock = async (productId: string, sizeId: string) => {
+  return prismaClient.stock.findUnique({
+    where: {
+      productId_sizeId: {
+        productId,
+        sizeId,
+      },
+    },
+    select: {
+      quantity: true,
+    },
+  });
+};
+
+export const findCartByBuyerId = async (buyerId: string) => {
   return await prismaClient.cart.findUnique({
     where: { buyerId },
   });
 };
 
-export const getCartItemById = async (cartItemId: string) => {
+export const findCartItemById = async (cartItemId: string) => {
   return await prismaClient.cartItem.findUnique({
     where: { id: cartItemId },
   });
 };
 
-export const getCartById = async (cartId: string) => {
+export const findCartById = async (cartId: string) => {
   return await prismaClient.cart.findUnique({
     where: { id: cartId },
   });
 };
 
-export const getProductById = async (productId: string) => {
+export const findProductById = async (productId: string) => {
   return await prismaClient.product.findUnique({
     where: { id: productId },
   });
 };
 
-export const getSizeById = async (sizeId: string) => {
+export const findCartItem = async (
+  tx: Prisma.TransactionClient,
+  cartId: string,
+  productId: string,
+  sizeId: string,
+) => {
+  return await tx.cartItem.findUnique({
+    where: {
+      cartId_productId_sizeId: { cartId, productId, sizeId },
+    },
+  });
+};
+
+export const findSizeById = async (sizeId: string) => {
   return await prismaClient.size.findUnique({
     where: { id: sizeId },
   });
