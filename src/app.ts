@@ -15,6 +15,7 @@ import reviewsRouter from './routers/reviewsRouter';
 import inquiriesRouter from './routers/inquiriesRouter';
 import multer from 'multer';
 import s3Router from './routers/s3Router';
+import metadatasRouter from './routers/metadatasRouter';
 
 const app = express();
 
@@ -33,6 +34,7 @@ app.use('/api/users', userrouter);
 app.use('/api/cart', cartRouter);
 app.use('/api/order', orderRouter);
 app.use('/api/s3', s3Router);
+app.use('/api/metadata', metadatasRouter);
 
 app.use(defaultNotFoundHandler);
 app.use(globalErrorHandler);
