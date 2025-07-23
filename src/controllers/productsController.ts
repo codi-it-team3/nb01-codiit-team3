@@ -1,8 +1,8 @@
 import type { Request, Response } from 'express';
 import * as productsService from '../services/productsService';
+import { upsertProductView, getPopularProductList } from '../repositories/productsRepository';
 import * as reviewsService from '../services/reviewsSerivce';
 import * as inquiriesSerivce from '../services/inquiriesService';
-import BadRequestError from '../lib/errors/BadRequestError';
 import NotFoundError from '../lib/errors/ProductNotFoundError';
 import UnauthorizedError from '../lib/errors/UnauthorizedError';
 import {
@@ -38,6 +38,10 @@ export const getProductDetail = withAsync(async (req: Request, res: Response) =>
   const { id } = create({ id: req.params.id }, IdParamsStruct);
   const product = await productsService.getProductDetail(id);
   if (!product) throw new NotFoundError('product', id);
+  if (req.user) {
+    await upsertProductView(req.user.id, id);
+  }
+
   res.send(product);
 });
 
@@ -95,7 +99,9 @@ export const getReviewList = withAsync(async (req: Request, res: Response) => {
 });
 
 export const getRecommendedProducts = withAsync(async (req: Request, res: Response) => {
-  if (!req.user) throw new UnauthorizedError('인증되지 않은 유저입니다.');
-  const recommended = await productsService.getRecommendedProducts(req.user.id);
+  const userId = req.user?.id;
+  const recommended = userId
+    ? await productsService.getRecommendedProducts(userId)
+    : await productsService.getPopularProducts(4);
   res.status(200).send({ list: recommended });
 });

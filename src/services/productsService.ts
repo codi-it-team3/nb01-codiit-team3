@@ -210,3 +210,7 @@ export async function getRecommendedProducts(userId: string) {
 
   return recommendedProducts;
 }
+
+export async function getPopularProducts(limit = 4) {
+  return await getPopularProductList(limit);
+}

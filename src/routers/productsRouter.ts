@@ -25,7 +25,7 @@ router.post('/:productId/inquiries', authMiddleware, withAsync(createInquiry));
 router.get('/:productId/inquiries', authMiddleware, withAsync(getInquiryList));
 router.post('/:productId/reviews', authMiddleware, withAsync(createReview));
 router.get('/:productId/reviews', withAsync(getReviewList));
-router.get('/recommend', authMiddleware, withAsync(getRecommendedProducts));
+router.get('/recommend', withAsync(getRecommendedProducts));
 
 router.get('/', withAsync(getProductList));
 router.get('/:id', withAsync(getProductDetail));

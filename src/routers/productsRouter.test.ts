@@ -468,7 +468,7 @@ describe('Product API 통합 테스트 (CRUD)', () => {
         },
       });
 
-      const product = await prismaClient.product.create({
+      const recentProduct = await prismaClient.product.create({
         data: {
           name: '최근 본 상품',
           price: 22000,
@@ -476,8 +476,24 @@ describe('Product API 통합 테스트 (CRUD)', () => {
           categoryId: category.id,
           image: 'https://example.com/recent.jpg',
           content: '최근 본 상품입니다.',
+          viewCount: 5,
           stocks: {
             create: [{ sizeId: size.id, quantity: 3 }],
+          },
+        },
+      });
+
+      await prismaClient.product.create({
+        data: {
+          name: '추천 상품1',
+          price: 33000,
+          storeId: store.id,
+          categoryId: category.id,
+          image: 'https://example.com/recommend1.jpg',
+          content: '추천 상품입니다.',
+          viewCount: 10,
+          stocks: {
+            create: [{ sizeId: size.id, quantity: 5 }],
           },
         },
       });
@@ -485,7 +501,7 @@ describe('Product API 통합 테스트 (CRUD)', () => {
       await prismaClient.recentProductView.create({
         data: {
           userId: user.id,
-          productId: product.id,
+          productId: recentProduct.id,
         },
       });
 
@@ -497,10 +513,11 @@ describe('Product API 통합 테스트 (CRUD)', () => {
 
       expect(res.status).toBe(200);
       expect(Array.isArray(res.body.list)).toBe(true);
-      expect(res.body.list.length).toBeGreaterThanOrEqual(0);
+      expect(res.body.list.length).toBeGreaterThan(0);
+      expect(res.body.list[0].category.name).toBe('BOTTOM');
     });
 
-    it('최근 본 상품이 없으면 빈 배열을 반환한다', async () => {
+    it('최근 본 상품이 없으면 인기 상품 목록을 반환한다', async () => {
       const user = await prismaClient.user.create({
         data: {
           name: '최근없음',
@@ -518,12 +535,15 @@ describe('Product API 통합 테스트 (CRUD)', () => {
 
       expect(res.status).toBe(200);
       expect(Array.isArray(res.body.list)).toBe(true);
+      expect(res.body.list.length).toBeGreaterThanOrEqual(0);
     });
 
-    it('비로그인 사용자는 추천 상품 조회 시 401 반환', async () => {
+    it('비로그인 사용자는 인기 상품 목록을 반환한다', async () => {
       const res = await request(app).get('/api/products/recommend');
-      expect(res.status).toBe(401);
-      expect(res.body.message).toMatch(/인증/);
+
+      expect(res.status).toBe(200);
+      expect(Array.isArray(res.body.list)).toBe(true);
+      expect(res.body.list.length).toBeGreaterThanOrEqual(0);
     });
   });
 });
