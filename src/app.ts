@@ -17,6 +17,7 @@ import storeRouter from './routers/storeRouter';
 import multer from 'multer';
 import notificationsRouter from './routers/notificationsRouter';
 import s3Router from './routers/s3Router';
+import metadatasRouter from './routers/metadatasRouter';
 
 const app = express();
 
@@ -38,6 +39,7 @@ app.use('/cart', cartRouter);
 app.use('/order', orderRouter);
 app.use('/api/store', storeRouter);
 app.use('/api/s3', s3Router);
+app.use('/api/metadata', metadatasRouter);
 
 app.use(defaultNotFoundHandler);
 app.use(globalErrorHandler);
