@@ -1,0 +1,173 @@
+
+users:
+  post:
+    tags: [user]
+    summary: 회원가입
+    description: 새로운 사용자를 등록합니다.
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/RegisterUserInput'
+    responses:
+      '201':
+        description: 회원가입 성공
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserResponse'
+      '409':
+        description: 이미 존재하는 유저
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+me:
+  get:
+    tags: [user]
+    summary: 내 정보 조회
+    security:
+      - bearerAuth: []
+    responses:
+      '200':
+        description: 내 정보 반환
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserResponse'
+      '401':
+        description: 인증 필요
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+  patch:
+    tags: [user]
+    summary: 내 정보 수정
+    security:
+      - bearerAuth: []
+    requestBody:
+      required: true
+      content:
+        application/x-www-form-urlencoded:
+          schema:
+            $ref: '#/components/schemas/UpdateMyInfoBody'
+    responses:
+      '200':
+        description: 내 정보 수정 성공
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserResponse'
+      '400':
+        description: 잘못된 요청(비밀번호 불일치 등)
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+      '401':
+        description: 인증 필요
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+delete:
+  delete:
+    tags: [user]
+    summary: 회원 탈퇴
+    security:
+      - bearerAuth: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/DeleteMyAccountBody'
+    responses:
+      '200':
+        description: 회원 탈퇴 성공
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: 회원 탈퇴 성공
+      '400':
+        description: 잘못된 요청(비밀번호 불일치 등)
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+      '401':
+        description: 인증 필요
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    RegisterUserInput:
+      type: object
+      required: [email, password, name, type]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+        name:
+          type: string
+        image:
+          type: string
+          nullable: true
+        type:
+          type: string
+          enum: [BUYER, SELLER]
+    UpdateMyInfoBody:
+      type: object
+      required: [currentPassword]
+      properties:
+        name:
+          type: string
+        image:
+          type: string
+        password:
+          type: string
+        currentPassword:
+          type: string
+    DeleteMyAccountBody:
+      type: object
+      required: [currentPassword]
+      properties:
+        currentPassword:
+          type: string
+    UserResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        email:
+          type: string
+        type:
+          type: string
+          enum: [BUYER, SELLER]
+        points:
+          type: integer
+        image:
+          type: string
+          nullable: true
+    ErrorResponse:
+      type: object
+      properties:
+        message:
+          type: string

@@ -1,0 +1,360 @@
+order:
+  post:
+    tags: [Order]
+    summary: 주문 생성
+    security:
+      - bearerAuth: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/OrderRequest'
+    responses:
+      '201':
+        description: 주문 생성 성공
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrderResponse'
+      '400':
+        description: 잘못된 요청/포인트 부족/재고 부족 등
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+      '401':
+        description: 인증 실패
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+      '403':
+        description: 권한 없음(구매자 제한)
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+  get:
+    tags: [Order]
+    summary: 내 주문 목록 조회
+    security:
+      - bearerAuth: []
+    parameters:
+      - in: query
+        name: page
+        schema:
+          type: integer
+        description: 페이지 번호
+      - in: query
+        name: pageSize
+        schema:
+          type: integer
+        description: 페이지 크기
+      - in: query
+        name: status
+        schema:
+          type: string
+        description: 결제 상태
+      - in: query
+        name: orderBy
+        schema:
+          type: string
+        description: 정렬 기준(oldest/desc)
+    responses:
+      '200':
+        description: 주문 목록 조회 성공
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PaginatedOrderList'
+      '401':
+        description: 인증 실패
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+      '403':
+        description: 권한 없음(구매자 제한)
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+orderId:
+  get:
+    tags: [Order]
+    summary: 주문 상세 조회
+    security:
+      - bearerAuth: []
+    parameters:
+      - in: path
+        name: orderId
+        required: true
+        schema:
+          type: string
+        description: 주문 id
+    responses:
+      '200':
+        description: 주문 상세 조회 성공
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrderResponse'
+      '401':
+        description: 인증 실패
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+      '403':
+        description: 권한 없음(구매자 제한)
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+      '404':
+        description: 주문 없음
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+  patch:
+    tags: [Order]
+    summary: 주문 수정
+    security:
+      - bearerAuth: []
+    parameters:
+      - in: path
+        name: orderId
+        required: true
+        schema:
+          type: string
+        description: 주문 id
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/OrderUpdateRequest'
+    responses:
+      '200':
+        description: 주문 수정 성공
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrderResponse'
+      '400':
+        description: 잘못된 요청/포인트 부족 등
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+      '401':
+        description: 인증 실패
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+      '403':
+        description: 권한 없음(구매자 제한)
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+      '404':
+        description: 주문 없음
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+  delete:
+    tags: [Order]
+    summary: 주문 삭제
+    security:
+      - bearerAuth: []
+    parameters:
+      - in: path
+        name: orderId
+        required: true
+        schema:
+          type: string
+        description: 주문 id
+    responses:
+      '204':
+        description: 주문 삭제 성공
+      '400':
+        description: 결제 대기 상태가 아님
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+      '401':
+        description: 인증 실패
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+      '403':
+        description: 권한 없음(구매자 제한)
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+      '404':
+        description: 주문 없음
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    OrderRequest:
+      type: object
+      required:
+        - name
+        - phoneNumber
+        - address
+        - orderItems
+        - usePoint
+      properties:
+        name:
+          type: string
+        phoneNumber:
+          type: string
+        address:
+          type: string
+        orderItems:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderItemRequest'
+        usePoint:
+          type: integer
+    OrderItemRequest:
+      type: object
+      required:
+        - productId
+        - sizeId
+        - quantity
+      properties:
+        productId:
+          type: string
+        sizeId:
+          type: string
+        quantity:
+          type: integer
+    OrderUpdateRequest:
+      type: object
+      required:
+        - name
+        - phoneNumber
+        - address
+        - orderItems
+        - usePoint
+      properties:
+        name:
+          type: string
+        phoneNumber:
+          type: string
+        address:
+          type: string
+        orderItems:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderItemUpdateRequest'
+        usePoint:
+          type: integer
+    OrderItemUpdateRequest:
+      allOf:
+        - $ref: '#/components/schemas/OrderItemRequest'
+        - type: object
+          properties:
+            price:
+              type: integer
+    OrderResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        phoneNumber:
+          type: string
+        address:
+          type: string
+        subtotal:
+          type: integer
+        totalQuantity:
+          type: integer
+        usePoint:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+        orderItems:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderItemResponse'
+        payments:
+          $ref: '#/components/schemas/PaymentsResponse'
+    OrderItemResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        price:
+          type: integer
+        quantity:
+          type: integer
+        productId:
+          type: string
+        product:
+          type: object
+        size:
+          type: object
+        isReviewed:
+          type: boolean
+    PaymentsResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        price:
+          type: integer
+        status:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        orderId:
+          type: string
+    PaginatedOrderList:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderResponse'
+        meta:
+          type: object
+          properties:
+            limit:
+              type: integer
+            page:
+              type: integer
+            total:
+              type: integer
+            totalPages:
+              type: integer
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
