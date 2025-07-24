@@ -15,6 +15,7 @@ import reviewsRouter from './routers/reviewsRouter';
 import inquiriesRouter from './routers/inquiriesRouter';
 import storeRouter from './routers/storeRouter';
 import multer from 'multer';
+import notificationsRouter from './routers/notificationsRouter';
 import s3Router from './routers/s3Router';
 
 const app = express();
