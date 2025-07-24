@@ -89,6 +89,10 @@ export const favoriteStore = async (userId: string, storeId: string) => {
   }
 
   await storeRepository.createFavoriteStore(userId, storeId);
+  return {
+    type: 'register',
+    store,
+  };
 };
 
 export const unfavoriteStore = async (userId: string, storeId: string) => {

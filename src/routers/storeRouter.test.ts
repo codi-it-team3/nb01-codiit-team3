@@ -333,6 +333,8 @@ describe('Store API', () => {
         .set('Authorization', `Bearer ${buyerToken}`);
 
       expect(res.status).toBe(201);
+      expect(res.body).toHaveProperty('type', 'register');
+      expect(res.body.store).toHaveProperty('id', storeId);
     });
 
     it('이미 등록된 스토어를 다시 등록하면 409 반환', async () => {
