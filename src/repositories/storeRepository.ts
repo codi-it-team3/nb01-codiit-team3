@@ -88,3 +88,31 @@ export const getMyStoreProductList = async (
 
   return { list, totalCount };
 };
+
+export const createFavoriteStore = async (userId: string, storeId: string) => {
+  return prismaClient.favoriteStore.create({
+    data: {
+      userId,
+      storeId,
+    },
+  });
+};
+
+export const removeFavoriteStore = async (userId: string, storeId: string) => {
+  return prismaClient.favoriteStore.deleteMany({
+    where: {
+      userId,
+      storeId,
+    },
+  });
+};
+
+export const checkFavoriteStore = async (userId: string, storeId: string) => {
+  const result = await prismaClient.favoriteStore.findFirst({
+    where: {
+      userId,
+      storeId,
+    },
+  });
+  return !!result;
+};

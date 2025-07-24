@@ -45,3 +45,17 @@ export const getMyStoreProductList = withAsync(async (req: Request, res: Respons
   const result = await storeService.getMyStoreProductList(userId, value.page, value.pageSize);
   res.status(200).json(result);
 });
+
+export const favoriteStore = withAsync(async (req: Request, res: Response) => {
+  const { storeId } = create({ storeId: req.params.storeId }, StoreIdParamsStruct);
+  const { id: userId } = req.user!;
+  const result = await storeService.favoriteStore(userId, storeId);
+  res.status(201).json(result);
+});
+
+export const unfavoriteStore = withAsync(async (req: Request, res: Response) => {
+  const { storeId } = create({ storeId: req.params.storeId }, StoreIdParamsStruct);
+  const { id: userId } = req.user!;
+  await storeService.unfavoriteStore(userId, storeId);
+  res.status(204).send();
+});

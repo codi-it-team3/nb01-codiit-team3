@@ -76,3 +76,31 @@ export const getMyStoreProductList = async (userId: string, page?: number, pageS
   const result = await storeRepository.getMyStoreProductList(userId, { page, pageSize });
   return result;
 };
+
+export const favoriteStore = async (userId: string, storeId: string) => {
+  const store = await storeRepository.findStoreById(storeId);
+  if (!store) {
+    throw new NotFoundError('Store', `ID ${storeId}인 스토어를 찾을 수 없습니다.`);
+  }
+
+  const alreadyFavorited = await storeRepository.checkFavoriteStore(userId, storeId);
+  if (alreadyFavorited) {
+    throw new ConflictError('이미 관심 등록한 스토어입니다.');
+  }
+
+  await storeRepository.createFavoriteStore(userId, storeId);
+};
+
+export const unfavoriteStore = async (userId: string, storeId: string) => {
+  const store = await storeRepository.findStoreById(storeId);
+  if (!store) {
+    throw new NotFoundError('Store', `ID ${storeId}인 스토어를 찾을 수 없습니다.`);
+  }
+
+  const alreadyFavorited = await storeRepository.checkFavoriteStore(userId, storeId);
+  if (!alreadyFavorited) {
+    throw new ConflictError('이미 관심 해제된 스토어입니다.');
+  }
+
+  await storeRepository.removeFavoriteStore(userId, storeId);
+};

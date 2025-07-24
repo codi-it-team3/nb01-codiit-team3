@@ -7,6 +7,7 @@ import { GradeName, UserType } from '@prisma/client';
 import { prismaClient } from '../lib/prismaClient';
 import { clearDatabase } from '../lib/testUtils';
 import { generateToken } from '../lib/token';
+import { hashPassword } from '../lib/hash';
 
 describe('Store API', () => {
   let userId: string;
@@ -270,6 +271,112 @@ describe('Store API', () => {
 
       expect(res.status).toBe(403);
       expect(res.body.message).toContain('판매자만 접근 가능합니다.');
+    });
+  });
+
+  describe('관심 스토어 등록/해제', () => {
+    let storeId: string;
+    let buyerToken: string;
+
+    beforeAll(async () => {
+      await prismaClient.grade.upsert({
+        where: { id: 'grade_green' },
+        update: {},
+        create: {
+          id: 'grade_green',
+          name: 'Green',
+          rate: 0,
+          minAmount: 0,
+        },
+      });
+
+      const seller = await prismaClient.user.create({
+        data: {
+          name: '판매자',
+          email: 'seller@example.com',
+          password: await hashPassword('test1234'),
+          gradeId: 'grade_green',
+          type: 'SELLER',
+        },
+      });
+
+      const store = await prismaClient.store.create({
+        data: {
+          name: '관심스토어',
+          address: '서울시 강남구',
+          detailAddress: '101동 202호',
+          phoneNumber: '01012345678',
+          content: '테스트 스토어입니다.',
+          image: 'https://example.com/store.jpg',
+          userId: seller.id,
+        },
+      });
+      storeId = store.id;
+
+      const buyer = await prismaClient.user.create({
+        data: {
+          name: '관심유저',
+          email: 'favorite-user@example.com',
+          password: await hashPassword('test1234'),
+          gradeId: 'grade_green',
+          type: 'BUYER',
+        },
+      });
+
+      const { accessToken } = generateToken(buyer.id, 'BUYER');
+      buyerToken = accessToken;
+    });
+
+    it('관심 스토어 등록 성공 (201)', async () => {
+      const res = await request(app)
+        .post(`/api/store/${storeId}/favorite`)
+        .set('Authorization', `Bearer ${buyerToken}`);
+
+      expect(res.status).toBe(201);
+    });
+
+    it('이미 등록된 스토어를 다시 등록하면 409 반환', async () => {
+      const res = await request(app)
+        .post(`/api/store/${storeId}/favorite`)
+        .set('Authorization', `Bearer ${buyerToken}`);
+
+      expect(res.status).toBe(409);
+      expect(res.body.message).toMatch(/이미 관심 등록/);
+    });
+
+    it('관심 스토어 해제 성공 (204)', async () => {
+      const res = await request(app)
+        .delete(`/api/store/${storeId}/favorite`)
+        .set('Authorization', `Bearer ${buyerToken}`);
+
+      expect(res.status).toBe(204);
+    });
+
+    it('이미 해제된 스토어를 다시 해제하면 409 반환', async () => {
+      const res = await request(app)
+        .delete(`/api/store/${storeId}/favorite`)
+        .set('Authorization', `Bearer ${buyerToken}`);
+
+      expect(res.status).toBe(409);
+      expect(res.body.message).toMatch('이미 관심 해제된 스토어입니다.');
+    });
+
+    it('존재하지 않는 스토어에 관심 등록 시 404 반환', async () => {
+      const res = await request(app)
+        .post(`/api/store/nonexistent-store-id/favorite`)
+        .set('Authorization', `Bearer ${buyerToken}`);
+
+      expect(res.status).toBe(404);
+    });
+
+    it('인증되지 않은 사용자는 등록할 수 없다', async () => {
+      const res = await request(app).post(`/api/store/${storeId}/favorite`);
+      expect(res.status).toBe(401);
+    });
+
+    it('인증되지 않은 사용자는 해제할 수 없다', async () => {
+      const res = await request(app).delete(`/api/store/${storeId}/favorite`);
+      expect(res.status).toBe(401);
     });
   });
 });
