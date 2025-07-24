@@ -17,7 +17,7 @@ async function main() {
 
 main()
   .then(() => {
-    console.log('✅ Grade seed complete');
+    console.log('Grade seed complete');
     return prisma.$disconnect();
   })
   .catch((e) => {
