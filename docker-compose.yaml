@@ -1,0 +1,30 @@
+services:
+  db:
+    image: postgres:latest
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=panda_market
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  app:
+    build: .
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./public:/app/public
+    environment:
+      - NODE_ENV=development
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/panda_market
+      - PORT=3000
+      - BASE_URL=http://localhost:3000
+      - PUBLIC_PATH=/app/public
+      - STATIC_PATH=/public
+    depends_on:
+      - db
+
+volumes:
+  postgres_data: 
