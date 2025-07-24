@@ -1,145 +1,89 @@
-import { Prisma } from '@prisma/client';
-import { prismaClient } from '../lib/prismaClient';
 import { CreateProductInput, UpdateProductInput, ProductQuery } from '../types/product';
 import NotFoundError from '../lib/errors/ProductNotFoundError';
+import UnauthorizedError from '../lib/errors/UnauthorizedError';
+import {
+  findStoreById,
+  findCategoryById,
+  findSizeById,
+  findProductById,
+  deleteProductById,
+  getFavoriteStoreIds,
+  createProductInDB,
+  getFilteredProductListAndCount,
+  getProductDetailById,
+  runUpdateProductTx,
+  getLatestProductView,
+  getProductListByCategoryExceptOne,
+  getPopularProductList,
+} from '../repositories/productsRepository';
+import { buildProductWhereQuery, buildProductOrderByQuery } from '../lib/utils/productQueryUtil';
+import { mapProductListWithStats } from '../lib/utils/productMapperUtil';
+import { getDiscountPrice, getReviewsStats } from '../lib/utils/productStatsUtil';
+import { mapUpdateProductData } from '../lib/utils/productMapperUtil';
 
-export async function createProduct(data: CreateProductInput) {
-  const store = await prismaClient.store.findUnique({ where: { id: data.storeId } });
+export async function createProduct(data: CreateProductInput, userId: string) {
+  const store = await findStoreById(data.storeId);
   if (!store) throw new NotFoundError('store', data.storeId);
 
-  const category = await prismaClient.category.findUnique({ where: { id: data.categoryId } });
+  if (store.userId !== userId) {
+    throw new UnauthorizedError('해당 스토어에 상품을 등록할 권한이 없습니다.');
+  }
+
+  const category = await findCategoryById(data.categoryId);
   if (!category) throw new NotFoundError('category', data.categoryId);
 
   for (const stock of data.stocks) {
-    const size = await prismaClient.size.findUnique({ where: { id: stock.sizeId } });
+    const size = await findSizeById(stock.sizeId);
     if (!size) throw new NotFoundError('size', stock.sizeId);
   }
-  return prismaClient.product.create({
-    data: {
-      name: data.name,
-      price: data.price,
-      storeId: data.storeId,
-      categoryId: data.categoryId,
-      image: data.image,
-      content: data.content,
-      discountRate: data.discountRate ?? 0,
-      discountStartTime: data.discountStartTime ? new Date(data.discountStartTime) : undefined,
-      discountEndTime: data.discountEndTime ? new Date(data.discountEndTime) : undefined,
-      stocks: {
-        createMany: {
-          data: data.stocks.map((stock) => ({
-            sizeId: stock.sizeId,
-            quantity: stock.quantity,
-          })),
-        },
+
+  const created = await createProductInDB({
+    name: data.name,
+    price: data.price,
+    image: data.image,
+    content: data.content,
+    discountRate: data.discountRate ?? 0,
+    discountStartTime: data.discountStartTime ? new Date(data.discountStartTime) : undefined,
+    discountEndTime: data.discountEndTime ? new Date(data.discountEndTime) : undefined,
+    store: { connect: { id: data.storeId } },
+    category: { connect: { id: data.categoryId } },
+    stocks: {
+      createMany: {
+        data: data.stocks.map((stock) => ({
+          sizeId: stock.sizeId,
+          quantity: stock.quantity,
+        })),
       },
     },
   });
+
+  return getProductDetailById(created.id);
 }
 
 export async function getProductList(params: ProductQuery, userId?: string) {
-  const {
-    name,
-    storeName,
-    categoryId,
-    sizeId,
-    minPrice,
-    maxPrice,
-    sort = 'recent',
-    limit = '10',
-    favoriteOnly,
-  } = params;
+  const { sort = 'recent', limit = '10', favoriteOnly } = params;
 
   const page = String(params.page ?? '1');
-
   const take = parseInt(limit, 10);
   const skip = (parseInt(page, 10) - 1) * take;
 
   let favoriteStoreIds: string[] = [];
   if (favoriteOnly === 'true' && userId) {
-    const favorites = await prismaClient.favoriteStore.findMany({
-      where: { userId },
-      select: { storeId: true },
-    });
-
-    favoriteStoreIds = favorites
-      .map((fav) => fav.storeId)
-      .filter((id): id is string => id !== null);
+    favoriteStoreIds = await getFavoriteStoreIds(userId);
   }
 
-  const where: Prisma.ProductWhereInput = {
-    ...(name && {
-      name: { contains: name, mode: 'insensitive' },
-    }),
-    ...(storeName && {
-      store: { name: { contains: storeName, mode: 'insensitive' } },
-    }),
-    ...(categoryId && { categoryId }),
-    ...(sizeId && {
-      stocks: {
-        some: { sizeId },
-      },
-    }),
-    ...(minPrice && { price: { gte: parseInt(minPrice) } }),
-    ...(maxPrice && { price: { lte: parseInt(maxPrice) } }),
-    ...(favoriteStoreIds.length > 0 && {
-      storeId: { in: favoriteStoreIds },
-    }),
-  };
+  const where = buildProductWhereQuery(params, favoriteStoreIds);
+  const orderBy = buildProductOrderByQuery(sort);
 
-  const orderBy: Prisma.ProductOrderByWithRelationInput =
-    sort === 'price_low'
-      ? { price: 'asc' }
-      : sort === 'price_high'
-        ? { price: 'desc' }
-        : sort === 'rating'
-          ? { reviewsRating: 'desc' }
-          : sort === 'review'
-            ? { reviews: { _count: 'desc' } }
-            : sort === 'sales'
-              ? { SalesLog: { _count: 'desc' } }
-              : { createdAt: 'desc' };
-
-  const [list, total] = await Promise.all([
-    prismaClient.product.findMany({
-      where,
-      orderBy,
-      skip,
-      take,
-      include: {
-        category: true,
-        stocks: { include: { size: true } },
-        store: true,
-        _count: { select: { reviews: true } },
-        SalesLog: {
-          select: {
-            quantity: true,
-          },
-        },
-      },
-    }),
-    prismaClient.product.count({ where }),
-  ]);
+  const [list, total] = await getFilteredProductListAndCount({
+    where,
+    orderBy,
+    skip,
+    take,
+  });
 
   const totalPages = Math.ceil(total / take);
-
-  const processedList = list.map((product) => {
-    const totalQuantity = product.stocks.reduce((sum, stock) => sum + stock.quantity, 0);
-    const isSoldOut = totalQuantity === 0;
-
-    const totalSales = product.SalesLog.reduce((sum, log) => sum + log.quantity, 0);
-    const discountPrice = product.discountRate
-      ? Math.floor(product.price * (1 - product.discountRate / 100))
-      : product.price;
-
-    return {
-      ...product,
-      discountPrice,
-      isSoldOut,
-      reviewsCount: product._count.reviews,
-      sales: totalSales,
-    };
-  });
+  const processedList = mapProductListWithStats(list);
 
   return {
     list: processedList,
@@ -151,43 +95,17 @@ export async function getProductList(params: ProductQuery, userId?: string) {
 }
 
 export async function getProductDetail(id: string) {
-  const product = await prismaClient.product.findUnique({
-    where: { id },
-    include: {
-      stocks: { include: { size: true } },
-      category: true,
-      store: { select: { name: true } },
-      reviews: { select: { rating: true } },
-      inquiries: {
-        include: {
-          reply: {
-            include: {
-              user: {
-                select: {
-                  id: true,
-                  name: true,
-                },
-              },
-            },
-          },
-        },
-      },
-    },
-  });
-
+  const product = await getProductDetailById(id);
   if (!product) return null;
 
-  const discountPrice = product.discountRate
-    ? Math.floor(product.price * (1 - product.discountRate / 100))
-    : product.price;
+  const discountPrice = getDiscountPrice(product.price, product.discountRate);
 
-  const reviewsCount = product.reviews.length;
-  const sumScore = product.reviews.reduce((sum, r) => sum + r.rating, 0);
-  const reviewsRating = reviewsCount > 0 ? Number((sumScore / reviewsCount).toFixed(1)) : 0;
-
-  const rateCounts = [1, 2, 3, 4, 5].map(
-    (rate) => product.reviews.filter((r) => r.rating === rate).length,
-  );
+  const {
+    count: reviewsCount,
+    rating: reviewsRating,
+    counts: rateCounts,
+    sum: sumScore,
+  } = getReviewsStats(product.reviews);
 
   return {
     id: product.id,
@@ -244,63 +162,55 @@ export async function getProductDetail(id: string) {
   };
 }
 
-export async function updateProduct(id: string, data: UpdateProductInput) {
-  const existing = await prismaClient.product.findUnique({ where: { id } });
+export async function updateProduct(id: string, data: UpdateProductInput, userId: string) {
+  const existing = await findProductById(id);
   if (!existing) throw new NotFoundError('product', id);
 
+  if (existing.store?.userId !== userId) {
+    throw new UnauthorizedError('해당 상품을 수정할 권한이 없습니다.');
+  }
+
   if (data.categoryId) {
-    const category = await prismaClient.category.findUnique({ where: { id: data.categoryId } });
+    const category = await findCategoryById(data.categoryId);
     if (!category) throw new NotFoundError('category', data.categoryId);
   }
 
   if (data.stocks) {
     for (const stock of data.stocks) {
-      const size = await prismaClient.size.findUnique({ where: { id: stock.sizeId } });
+      const size = await findSizeById(stock.sizeId);
       if (!size) throw new NotFoundError('size', stock.sizeId);
     }
   }
 
-  return prismaClient.$transaction(async (tx) => {
-    const updatedProduct = await tx.product.update({
-      where: { id },
-      data: {
-        ...(data.name !== undefined && { name: data.name }),
-        ...(data.price !== undefined && { price: data.price }),
-        ...(data.discountRate !== undefined && { discountRate: data.discountRate }),
-        ...(data.discountStartTime !== undefined && {
-          discountStartTime: new Date(data.discountStartTime),
-        }),
-        ...(data.discountEndTime !== undefined && {
-          discountEndTime: new Date(data.discountEndTime),
-        }),
-        ...(data.categoryId !== undefined && { category: { connect: { id: data.categoryId } } }),
-        ...(data.content !== undefined && { content: data.content }),
-      },
-    });
-
-    if (data.stocks) {
-      await tx.stock.deleteMany({
-        where: { productId: id },
-      });
-
-      await tx.stock.createMany({
-        data: data.stocks.map((stock) => ({
-          productId: id,
-          sizeId: stock.sizeId,
-          quantity: stock.quantity,
-        })),
-      });
-    }
-
-    return updatedProduct;
-  });
+  const updateData = mapUpdateProductData(data);
+  return runUpdateProductTx(id, updateData, data.stocks);
 }
 
-export async function deleteProduct(id: string) {
-  const product = await prismaClient.product.findUnique({ where: { id } });
-  if (!product) {
-    throw new NotFoundError('product', id);
+export async function deleteProduct(id: string, userId: string) {
+  const product = await findProductById(id);
+  if (!product) throw new NotFoundError('product', id);
+
+  if (product.store?.userId !== userId) {
+    throw new UnauthorizedError('해당 상품을 삭제할 권한이 없습니다.');
   }
 
-  await prismaClient.product.delete({ where: { id } });
+  await deleteProductById(id);
+}
+
+export async function getRecommendedProducts(userId: string) {
+  const latestView = await getLatestProductView(userId);
+
+  if (!latestView || !latestView.product) {
+    return await getPopularProductList(4);
+  }
+
+  const { id: lastProductId, categoryId } = latestView.product;
+
+  const recommendedProducts = await getProductListByCategoryExceptOne(categoryId, lastProductId, 4);
+
+  return recommendedProducts;
+}
+
+export async function getPopularProducts(limit = 4) {
+  return await getPopularProductList(limit);
 }

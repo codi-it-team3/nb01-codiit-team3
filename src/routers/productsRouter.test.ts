@@ -2,6 +2,8 @@ import request from 'supertest';
 import app from '../app';
 import { prismaClient } from '../lib/prismaClient';
 import { clearDatabase } from '../lib/testUtils';
+import { hashPassword } from '../lib/hash';
+import { generateToken } from '../lib/token';
 
 type StockItem = {
   sizeId: string;
@@ -23,6 +25,7 @@ type ProductListItem = {
   categoryId: string;
   image: string;
   createdAt: string;
+  averageRating?: number;
 };
 
 type ProductListItemWithStoreAndStocks = ProductListItem & {
@@ -36,6 +39,7 @@ describe('Product API 통합 테스트 (CRUD)', () => {
   let sizeId: string;
   let productId: string;
   let productIdForUpdate: string;
+  let userId: string;
 
   beforeAll(async () => {
     await clearDatabase(prismaClient);
@@ -49,20 +53,25 @@ describe('Product API 통합 테스트 (CRUD)', () => {
       },
     });
 
+    const hashedPassword = await hashPassword('test1234');
+
     const user = await prismaClient.user.create({
       data: {
         name: '테스트유저',
         email: 'test@example.com',
-        password: 'hashed-password',
+        password: hashedPassword,
         gradeId: 'grade_green',
         type: 'SELLER',
       },
     });
 
+    userId = user.id;
+
     const store = await prismaClient.store.create({
       data: {
         name: '테스트스토어',
         address: '서울시 강남구',
+        detailAddress: '역삼동 123-4',
         phoneNumber: '010-0000-0000',
         content: '설명',
         userId: user.id,
@@ -82,6 +91,9 @@ describe('Product API 통합 테스트 (CRUD)', () => {
       },
     });
     sizeId = size.id;
+
+    const { accessToken } = generateToken(user.id, 'SELLER');
+    process.env.TEST_TOKEN = accessToken;
   });
 
   afterAll(async () => {
@@ -93,6 +105,7 @@ describe('Product API 통합 테스트 (CRUD)', () => {
   it('상품을 등록할 수 있다', async () => {
     const res = await request(app)
       .post('/api/products')
+      .set('Authorization', `Bearer ${process.env.TEST_TOKEN}`)
       .send({
         name: '테스트 상품',
         price: 15000,
@@ -117,6 +130,7 @@ describe('Product API 통합 테스트 (CRUD)', () => {
   it('stocks 없이 수정 테스트용 상품을 등록한다', async () => {
     const res = await request(app)
       .post('/api/products')
+      .set('Authorization', `Bearer ${process.env.TEST_TOKEN}`)
       .send({
         name: '수정 테스트 상품',
         price: 17000,
@@ -134,6 +148,7 @@ describe('Product API 통합 테스트 (CRUD)', () => {
   it('할인 기간과 할인율이 반영된 상품을 등록할 수 있다', async () => {
     const res = await request(app)
       .post('/api/products')
+      .set('Authorization', `Bearer ${process.env.TEST_TOKEN}`)
       .send({
         name: '할인 상품',
         price: 20000,
@@ -174,7 +189,10 @@ describe('Product API 통합 테스트 (CRUD)', () => {
   });
 
   it('상품을 수정할 수 있다', async () => {
-    const res = await request(app).patch(`/api/products/${productId}`).send({ price: 9900 });
+    const res = await request(app)
+      .patch(`/api/products/${productId}`)
+      .set('Authorization', `Bearer ${process.env.TEST_TOKEN}`)
+      .send({ price: 9900 });
 
     expect(res.status).toBe(200);
     expect(res.body.price).toBe(9900);
@@ -183,6 +201,7 @@ describe('Product API 통합 테스트 (CRUD)', () => {
   it('stocks 없이 상품을 수정할 수 있다', async () => {
     const updateRes = await request(app)
       .patch(`/api/products/${productIdForUpdate}`)
+      .set('Authorization', `Bearer ${process.env.TEST_TOKEN}`)
       .send({ name: '수정된 상품명' });
 
     expect(updateRes.status).toBe(200);
@@ -190,13 +209,17 @@ describe('Product API 통합 테스트 (CRUD)', () => {
   });
 
   it('상품을 삭제할 수 있다', async () => {
-    const res = await request(app).delete(`/api/products/${productId}`);
+    const res = await request(app)
+      .delete(`/api/products/${productId}`)
+      .set('Authorization', `Bearer ${process.env.TEST_TOKEN}`);
+
     expect(res.status).toBe(204);
   });
 
   it('필수 필드가 누락된 상품 등록 시 400 반환', async () => {
     const res = await request(app)
       .post('/api/products')
+      .set('Authorization', `Bearer ${process.env.TEST_TOKEN}`)
       .send({
         price: 10000,
         storeId,
@@ -215,22 +238,23 @@ describe('Product API 통합 테스트 (CRUD)', () => {
     expect(res.body.message).toBe(`product with id ${productId} not found`);
   });
 
-  it('존재하지 않는 상품 ID로 상세 조회 시 404 반환', async () => {
-    const res = await request(app).get('/api/products/99999999');
-    expect(res.status).toBe(404);
-    expect(res.body.message).toBe(`product with id 99999999 not found`);
-  });
-
   it('존재하지 않는 상품 ID로 수정 시 404 반환', async () => {
     const nonExistentId = '99999999';
-    const res = await request(app).patch(`/api/products/${nonExistentId}`).send({ price: 9999 });
+    const res = await request(app)
+      .patch(`/api/products/${nonExistentId}`)
+      .set('Authorization', `Bearer ${process.env.TEST_TOKEN}`)
+      .send({ price: 9999 });
+
     expect(res.status).toBe(404);
     expect(res.body.message).toBe(`product with id ${nonExistentId} not found`);
   });
 
   it('존재하지 않는 상품 ID로 삭제 시 404 반환', async () => {
     const nonExistentId = '99999999';
-    const res = await request(app).delete(`/api/products/${nonExistentId}`);
+    const res = await request(app)
+      .delete(`/api/products/${nonExistentId}`)
+      .set('Authorization', `Bearer ${process.env.TEST_TOKEN}`);
+
     expect(res.status).toBe(404);
     expect(res.body.message).toBe(`product with id ${nonExistentId} not found`);
   });
@@ -238,6 +262,7 @@ describe('Product API 통합 테스트 (CRUD)', () => {
   it('할인 기간 없이 할인율만 포함해 등록할 수 있다', async () => {
     const res = await request(app)
       .post('/api/products')
+      .set('Authorization', `Bearer ${process.env.TEST_TOKEN}`)
       .send({
         name: '할인율만 상품',
         price: 18000,
@@ -316,9 +341,9 @@ describe('Product API 통합 테스트 (CRUD)', () => {
 
     it('리뷰 평점 정렬이 적용된다', async () => {
       const res = await request(app).get('/api/products?sort=rating');
-      expect(res.status).toBe(200);
 
-      const ratings = (res.body.list as ProductListItem[]).map((p) => p.reviewsCount);
+      expect(res.status).toBe(200);
+      const ratings = (res.body.list as ProductListItem[]).map((p) => p.averageRating ?? 0);
       const sorted = [...ratings].sort((a, b) => b - a);
       expect(ratings).toEqual(sorted);
     });
@@ -390,6 +415,135 @@ describe('Product API 통합 테스트 (CRUD)', () => {
           p.store.name.toLowerCase().includes(storeName.toLowerCase()),
         ),
       ).toBe(true);
+    });
+
+    it('인증되지 않은 사용자가 상품 등록 시 401 반환', async () => {
+      const res = await request(app)
+        .post('/api/products')
+        .send({
+          name: '비인증 등록 상품',
+          price: 10000,
+          storeId,
+          categoryId,
+          stocks: [{ sizeId, quantity: 3 }],
+          image: 'https://example.com/noauth.jpg',
+          content: '비인증 등록 시도',
+        });
+
+      expect(res.status).toBe(401);
+      expect(res.body.message).toMatch(/인증이 필요/);
+    });
+  });
+
+  describe('추천 상품 API', () => {
+    it('최근 본 상품의 카테고리를 기반으로 추천 상품을 조회할 수 있다', async () => {
+      const user = await prismaClient.user.create({
+        data: {
+          name: '추천 유저',
+          email: 'recommend@example.com',
+          password: 'hashed',
+          gradeId: 'grade_green',
+        },
+      });
+
+      const category = await prismaClient.category.create({
+        data: { name: 'BOTTOM' },
+      });
+
+      const store = await prismaClient.store.create({
+        data: {
+          name: '추천스토어',
+          address: '서울시 강북구',
+          detailAddress: '홍제동 12-1',
+          phoneNumber: '010-1234-5678',
+          content: '추천용 스토어',
+          userId: user.id,
+        },
+      });
+
+      const size = await prismaClient.size.create({
+        data: {
+          name: 'M',
+          size: { width: 20, height: 30 },
+        },
+      });
+
+      const recentProduct = await prismaClient.product.create({
+        data: {
+          name: '최근 본 상품',
+          price: 22000,
+          storeId: store.id,
+          categoryId: category.id,
+          image: 'https://example.com/recent.jpg',
+          content: '최근 본 상품입니다.',
+          viewCount: 5,
+          stocks: {
+            create: [{ sizeId: size.id, quantity: 3 }],
+          },
+        },
+      });
+
+      await prismaClient.product.create({
+        data: {
+          name: '추천 상품1',
+          price: 33000,
+          storeId: store.id,
+          categoryId: category.id,
+          image: 'https://example.com/recommend1.jpg',
+          content: '추천 상품입니다.',
+          viewCount: 10,
+          stocks: {
+            create: [{ sizeId: size.id, quantity: 5 }],
+          },
+        },
+      });
+
+      await prismaClient.recentProductView.create({
+        data: {
+          userId: user.id,
+          productId: recentProduct.id,
+        },
+      });
+
+      const { accessToken } = generateToken(user.id, 'BUYER');
+
+      const res = await request(app)
+        .get('/api/products/recommend')
+        .set('Authorization', `Bearer ${accessToken}`);
+
+      expect(res.status).toBe(200);
+      expect(Array.isArray(res.body.list)).toBe(true);
+      expect(res.body.list.length).toBeGreaterThan(0);
+      expect(res.body.list[0].category.name).toBe('BOTTOM');
+    });
+
+    it('최근 본 상품이 없으면 인기 상품 목록을 반환한다', async () => {
+      const user = await prismaClient.user.create({
+        data: {
+          name: '최근없음',
+          email: 'no-view@example.com',
+          password: 'hashed',
+          gradeId: 'grade_green',
+        },
+      });
+
+      const { accessToken } = generateToken(user.id, 'BUYER');
+
+      const res = await request(app)
+        .get('/api/products/recommend')
+        .set('Authorization', `Bearer ${accessToken}`);
+
+      expect(res.status).toBe(200);
+      expect(Array.isArray(res.body.list)).toBe(true);
+      expect(res.body.list.length).toBeGreaterThanOrEqual(0);
+    });
+
+    it('비로그인 사용자는 인기 상품 목록을 반환한다', async () => {
+      const res = await request(app).get('/api/products/recommend');
+
+      expect(res.status).toBe(200);
+      expect(Array.isArray(res.body.list)).toBe(true);
+      expect(res.body.list.length).toBeGreaterThanOrEqual(0);
     });
   });
 });

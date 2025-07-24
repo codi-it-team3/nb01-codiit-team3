@@ -34,6 +34,7 @@ export const storeData = {
   name: '너이키',
   userId: sellerUserData.id,
   address: '서울',
+  detailAddress: '101호',
   phoneNumber: '123-1234',
   content: '스포츠 용품',
   image: 'imageURL',
