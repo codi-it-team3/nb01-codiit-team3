@@ -1,4 +1,3 @@
-import NotFoundError from '../lib/errors/NotFoundError';
 import { prismaClient } from '../lib/prismaClient';
 import { User, Grade } from '@prisma/client';
 

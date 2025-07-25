@@ -1,12 +1,10 @@
 import { Request, Response } from 'express';
 import { create } from 'superstruct';
 import { ACCESS_TOKEN_COOKIE_NAME, REFRESH_TOKEN_COOKIE_NAME, NODE_ENV } from '../lib/constants';
-import { LoginBodyStruct, RegisterBodyStruct } from '../structs/authStruct';
+import { LoginBodyStruct } from '../structs/authStruct';
 import * as authService from '../services/authServices';
 import userResponseDTO from '../dto/userResponseDTO'; 
-import { RequestHandler } from 'express';
-import { ParamsDictionary } from 'express-serve-static-core';
-import { ParsedQs } from 'qs';
+
 
 
 export async function login(req: Request, res: Response) {

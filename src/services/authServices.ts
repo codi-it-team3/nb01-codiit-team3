@@ -5,8 +5,6 @@ import BadRequestError from '../lib/errors/BadRequestError';
 import { generateToken, verifyAccessToken, verifyRefreshToken } from '../lib/token';
 import NotFoundError from '../lib/errors/NotFoundError';
 import UnauthorizedError from '../lib/errors/UnauthorizedError';
-import { RegisterUserInput } from '../types/User';
-import { UserType } from '@prisma/client';
 import { hashPassword as hashPasswordUtil, verifyPassword } from '../lib/hash';
 
 export async function login(data: Pick<User, 'email' | 'password'>) {

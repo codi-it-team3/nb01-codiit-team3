@@ -1,8 +1,6 @@
 import { Request, Response } from 'express';
 import { create } from 'superstruct';
-import { ACCESS_TOKEN_COOKIE_NAME, REFRESH_TOKEN_COOKIE_NAME, NODE_ENV } from '../lib/constants';
-import { LoginBodyStruct, RegisterBodyStruct } from '../structs/authStruct';
-import * as authService from '../services/authServices';
+import { RegisterBodyStruct } from '../structs/authStruct';
 import * as userService from '../services/userService';
 import userResponseDTO from '../dto/userResponseDTO';
 import { User, UserType } from '@prisma/client';
