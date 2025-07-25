@@ -1,0 +1,47 @@
+openapi: 3.0.0
+info:
+  title: CODI-IT API
+  version: 1.0.0
+  description: CODI-IT 프로젝트 - API 문서
+servers:
+  - url: http://localhost:3000
+
+paths:
+
+  # 인증
+  /api/auth/login:
+    $ref: "./auth.swagger.yaml#/login"
+  /api/auth/refresh:
+    $ref: "./auth.swagger.yaml#/refresh"
+  /api/auth/logout:
+    $ref: "./auth.swagger.yaml#/logout"
+
+  # 유저
+  /api/users:
+    $ref: "./users.swagger.yaml#/users"
+  /api/users/me:
+    $ref: "./users.swagger.yaml#/me"
+  /api/users/delete:
+    $ref: "./users.swagger.yaml#/delete"
+
+  # 장바구니
+  /api/cart:
+    $ref: "./cart.swagger.yaml#/cart"
+  /api/cart/{cartId}:
+    $ref: "./cart.swagger.yaml#/cartId"
+
+  # 주문
+  /api/order:
+    $ref: "./order.swagger.yaml#/order"
+  /api/order/{orderId}:
+    $ref: "./order.swagger.yaml#/orderId"
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+security:
+  - bearerAuth: []

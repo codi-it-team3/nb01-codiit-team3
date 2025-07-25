@@ -1,6 +1,6 @@
 import type { Request, Response } from 'express';
 import * as productsService from '../services/productsService';
-import { upsertProductView, getPopularProductList } from '../repositories/productsRepository';
+import { upsertProductView } from '../repositories/productsRepository';
 import * as reviewsService from '../services/reviewsSerivce';
 import * as inquiriesSerivce from '../services/inquiriesService';
 import NotFoundError from '../lib/errors/ProductNotFoundError';

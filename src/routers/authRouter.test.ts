@@ -1,6 +1,6 @@
 import request from 'supertest';
-import app from '../../src/app';
-import { prismaClient } from '../../src/lib/prismaClient';
+import app from '../app';
+import { prismaClient } from '../lib/prismaClient';
 import { GradeName } from '@prisma/client';
 
 describe('Auth API 통합 테스트', () => {
@@ -37,7 +37,7 @@ describe('Auth API 통합 테스트', () => {
     });
 
     if (!user) {
-      const { hashPassword } = await import('../../src/lib/hash');
+      const { hashPassword } = await import('../lib/hash');
       await prismaClient.user.create({
         data: {
           email: userCredentials.email,
