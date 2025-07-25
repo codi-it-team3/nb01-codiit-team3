@@ -1,10 +1,10 @@
-import { nonempty, nullable, enums, object, string } from 'superstruct';
+import { nonempty, nullable, enums, object, string, optional } from 'superstruct';
 
 export const RegisterBodyStruct = object({
   email: nonempty(string()),
   name: nonempty(string()),
   password: nonempty(string()),
-  image: nullable(string()),
+  image: optional(nullable(string())),
   type: enums(['BUYER', 'SELLER']),
 });
 
