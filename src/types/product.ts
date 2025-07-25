@@ -1,3 +1,5 @@
+import { Product, Stock, Size, Category, Store, Prisma } from '@prisma/client';
+
 export interface StockInput {
   sizeId: string;
   quantity: number;
@@ -48,3 +50,11 @@ export interface UpdateProductInput {
     quantity: number;
   }[];
 }
+
+export type ProductListItem = Product & {
+  stocks: (Stock & { size: Size })[];
+  category: Category;
+  store: Store;
+  SalesLog: { quantity: number }[];
+  _count: { reviews: number };
+};

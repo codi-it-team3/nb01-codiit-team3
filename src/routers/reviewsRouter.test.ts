@@ -39,6 +39,7 @@ describe('리뷰 API 테스트', () => {
         data: {
           name: 'CODI-IT',
           address: '서울특별시 강남구 테헤란로 123',
+          detailAddress: '101호',
           phoneNumber: '010-1234-5678',
           content: '저희는 CODI-IT 입니다.',
           image: 'https://example.com/image.jpg',
