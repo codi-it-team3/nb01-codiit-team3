@@ -35,14 +35,25 @@ export async function refreshToken(
     throw new BadRequestError('Invalid refresh token');
   }
 
-  const { userId } = verifyRefreshToken(refreshToken);
-  const user = await usersRepository.getUser(userId);
+  let userId: string;
+  try {
+    ({ userId } = verifyRefreshToken(refreshToken));
+  } catch (err) {
+    throw new UnauthorizedError('Invalid refresh token');
+  }
 
+  const user = await usersRepository.getUser(userId);
   if (!user) {
     throw new UnauthorizedError('User not found');
   }
 
+  if (user.refreshToken !== refreshToken) {
+    throw new UnauthorizedError('Refresh token mismatch');
+  }
+
   const { accessToken, refreshToken: newRefreshToken } = generateToken(user.id, user.type);
+
+  await usersRepository.updateUser(user.id, { refreshToken: newRefreshToken });
 
   return { accessToken, refreshToken: newRefreshToken };
 }

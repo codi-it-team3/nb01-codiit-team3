@@ -48,7 +48,7 @@ function setTokenCookies(res: Response, accessToken: string, refreshToken: strin
     httpOnly: true,
     secure: NODE_ENV === 'production',
     maxAge: 3 * 24 * 60 * 60 * 1000,
-    path: '/api/auth/refresh',
+    path: '/',
   });
 }
 
